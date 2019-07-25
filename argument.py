@@ -1,14 +1,18 @@
 
 
 class Argument:
-    def __init__(self, arg_id, descriptive_text, framework):
+    def __init__(self, arg_id, descriptive_text):
         self.__arg_id = arg_id
         self.__descriptive_text = descriptive_text
-        self.__framework = framework
+        self.__framework = None
         self.__evidence = []
+        self.__generator = None
 
     def id(self):
         return self.__arg_id
+
+    def set_framework(self, framework):
+        self.__framework = framework
 
     def add_evidence(self, evidence):
         self.__evidence.append(evidence)
@@ -28,6 +32,13 @@ class Argument:
             return
         self.__framework.add_attack(self.__arg_id, attacked_id)
 
+    def set_generator(self, generator):
+        self.__generator = generator
+
+    def generate(self):
+        if self.__generator is not None:
+            return self.__generator()
+
 
 class ArgumentationFramework:
     def __init__(self):
@@ -35,8 +46,13 @@ class ArgumentationFramework:
         self.__attacks = {}
         self.__attacked_by = {}
 
+    def add_arguments(self, arguments: list):
+        for arg in arguments:
+            self.add_argument(arg)
+
     def add_argument(self, argument):
         self.__arguments[argument.id()] = argument
+        argument.set_framework(self)
 
     def add_attack(self, attacker_id, attacked_id):
         if self.__attacks.get(attacker_id, None) is None:

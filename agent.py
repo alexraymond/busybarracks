@@ -22,7 +22,7 @@ class Agent:
         self.__plan = []
         self.__known_cells = {}
         self.__agent_id = agent_id
-        self.__visibility_radius = 2#np.random.randint(4, 5)  # TODO: Change this.
+        self.__visibility_radius = 2  # np.random.randint(4, 5)  # TODO: Change this.
         self.__current_pos = None
         self.__current_time_step = 0
         self.__latest_world_model = None
@@ -38,6 +38,18 @@ class Agent:
         self.__negotiated_with = set()
         self.__current_conflict = None
         self.__conceding_to_agents = set()
+
+        self.__culture = None
+
+    def set_culture(self, culture):
+        self.__culture = culture
+        culture_properties = culture.__dict__.get("properties", None)
+        if culture_properties is None:
+            print("Agent::set_culture: Culture {} has no properties.".format(culture.name))
+            return
+        for attr, default_value in culture_properties.items():
+            self.__setattr__(attr, default_value)
+
 
     def agent_id(self):
         return self.__agent_id

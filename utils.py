@@ -1,7 +1,6 @@
 POS = 0
 TIME_STEP = 1
 
-
 def in_visibility_range(range, pos, cell):
     x_pos, y_pos = pos
     x_cell, y_cell = cell
