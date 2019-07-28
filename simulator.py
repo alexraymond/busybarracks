@@ -1,11 +1,12 @@
 import numpy as np
 from grid3d import Grid3D
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE
-from agent import Agent, ArgumentID
+from agent import Agent
 from utils import *
 from edict import Broadcaster
+from cultures.easy import EasyCulture
 from argument import *
-from enum import Enum
+
 
 COMMUNICATION = True
 
@@ -19,39 +20,14 @@ class Simulator:
         self.__width = w
         self.__height = h
         self.__current_time_step = 0
-        self.__argumentation_framework = ArgumentationFramework()
+
+        self.__culture = EasyCulture()
 
         if filename:
             self.load_grid(filename)
 
-        self.init_argumentation_framework()
-
-    def argumentation_framework(self):
-        return self.__argumentation_framework
-
-    def init_argumentation_framework(self):
-        #############
-        # Arguments #
-        #############
-        AF = self.__argumentation_framework
-        a = Argument(ArgumentID.CHANGE_YOUR_ROUTE, "You must change your route.", AF)
-        b = Argument(ArgumentID.AT_FINAL_DESTINATION, "I am already at my final destination.", AF)
-        c = Argument(ArgumentID.NO_OTHER_PATH_AVAILABLE, "I have no other way of reaching my goal.", AF)
-        d = Argument(ArgumentID.PATH_IS_LONGER, "My path is longer than yours.", AF)
-        e = Argument(ArgumentID.NOWHERE_TO_MOVE, "I have nowhere else to move.", AF)
-
-        ###########
-        # Attacks #
-        ###########
-
-        # a.attacks(a)
-        b.attacks(a)
-        c.attacks(b)
-        d.attacks(a)
-        d.attacks(d)
-        e.attacks(a)
-
-        print("Attacked by b: {}".format(AF.arguments_attacked_by(c.id())))
+    def agent(self, agent_id):
+        return self.__agents.get(agent_id, None)
 
     def is_cell_empty(self, coord, t = 0):
         return self.__world_model.raw_grid_at(t)[coord[0]][coord[1]] == EMPTY
@@ -163,6 +139,9 @@ class Simulator:
             success = self.__world_model.add_agent(id, coord)
             if success:
                 self.__agents[id] = Agent(id, (self.__width, self.__height), self)
+                self.__agents[id].set_culture(self.__culture)
+                self.__agents[id].assign_property_value("rank", np.random.randint(1,7))  # TODO: Create mechanism to assign values via culture
+                self.__agents[id].assign_property_value("tasked_status", True if np.random.randint(0, 2) == 0 else False)
 
     def add_agent(self, coord, agent_id=None):
         if agent_id is None:
@@ -174,6 +153,9 @@ class Simulator:
         success = self.__world_model.add_agent(agent_id, coord)
         if success:
             self.__agents[agent_id] = Agent(agent_id, (self.__width, self.__height), self)
+            self.__agents[agent_id].set_culture(self.__culture)
+            self.__agents[agent_id].assign_property_value("rank", np.random.randint(1, 7))  # TODO: Create mechanism to assign values via culture
+            self.__agents[agent_id].assign_property_value("tasked_status", True if np.random.randint(0, 2) == 1 else False)
 
 
     def erase_item(self, coord):

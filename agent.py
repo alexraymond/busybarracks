@@ -9,15 +9,8 @@ from locution import *
 
 
 
-class ArgumentID(Enum):
-    CHANGE_YOUR_ROUTE = 1
-    AT_FINAL_DESTINATION = 2
-    NO_OTHER_PATH_AVAILABLE = 3
-    PATH_IS_LONGER = 4
-    NOWHERE_TO_MOVE = 5
-
 class Agent:
-    def __init__(self, agent_id, grid_dimensions, locution_broker):
+    def __init__(self, agent_id, grid_dimensions, simulator):
         self.__goal = None
         self.__plan = []
         self.__known_cells = {}
@@ -29,7 +22,7 @@ class Agent:
         self.__previous_world_models = {}
         self.__previous_plans = {}
         self.__grid_width, self.__grid_height = grid_dimensions
-        self.__locution_broker = locution_broker
+        self.__simulator = simulator
         self.__other_agents_waypoints = {}
         self.__max_waypoints_per_locution = 2
         self.__arguments_used_this_round = set()
@@ -49,6 +42,13 @@ class Agent:
             return
         for attr, default_value in culture_properties.items():
             self.__setattr__(attr, default_value)
+
+    def assign_property_value(self, property, value):
+        if hasattr(self, property) is False:
+            print("Agent::assign_property_value: Property {} not found within agent.".format(property))
+            return
+        self.__setattr__(property, value)
+
 
 
     def agent_id(self):
@@ -302,7 +302,7 @@ class Agent:
             if other_agent_id not in self.__other_agents_waypoints:
                 # Ask for their objective.
                 locution = Locution(ActType.ASK, ContentType.WAYPOINTS)
-                self.__locution_broker.send_locution(self.__agent_id, other_agent_id, locution)
+                self.__simulator.send_locution(self.__agent_id, other_agent_id, locution)
 
     def straight_line_obstructions(self, origin, destination):
         # Checks for obstructions in a straight line.
@@ -364,7 +364,7 @@ class Agent:
                         next_turns.append(turns[i])
 
                 reply = Locution(ActType.INFORM, ContentType.WAYPOINTS, waypoints=next_turns)
-                self.__locution_broker.send_locution(self.__agent_id, sender_id, reply)
+                self.__simulator.send_locution(self.__agent_id, sender_id, reply)
 
         elif received_locution.act_type() == ActType.INFORM:
             if received_locution.content_type() == ContentType.WAYPOINTS:
@@ -394,7 +394,7 @@ class Agent:
                         if i >= len(obstructions):
                             break
                     inform = Locution(ActType.INFORM, ContentType.OBSTACLE, obstacle=obstructions[0])
-                    self.__locution_broker.send_locution(self.__agent_id, sender_id, inform)
+                    self.__simulator.send_locution(self.__agent_id, sender_id, inform)
                 else:
                     # TODO: Handle case where we have both obstructions and path conflicts.
                     self.__agents_estimated_plans[sender_id] = self.estimated_path(their_position, their_next_waypoints)
@@ -415,8 +415,8 @@ class Agent:
                         # Start argumentation. Ask your opponent to change paths.
                         self.__negotiated_with.add(sender_id)
                         self.__current_conflict = conflict
-                        argument = Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=ArgumentID.CHANGE_YOUR_ROUTE, conflict=conflict)
-                        self.__locution_broker.send_locution(self.__agent_id, sender_id, argument)
+                        locution = Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=0, conflict=conflict)  # TODO: Add enum to argument_id
+                        self.__simulator.send_locution(self.__agent_id, sender_id, locution)
 
 
                 # TODO: Do something smart with the sender's waypoint.
@@ -444,48 +444,23 @@ class Agent:
         elif received_locution.act_type() == ActType.ARGUE:
             if received_locution.content_type() == ContentType.ARGUMENT:
                 self.__negotiated_with.add(sender_id)
-                AF = self.__locution_broker.argumentation_framework()
-                their_argument_id = received_locution.content()['argument_id']
+                AF = self.__culture.argumentation_framework
+                # Read useful information from their argument.
+                their_locution_content = received_locution.content()
+                their_argument_id = their_locution_content['argument_id']
                 argument_text = AF.argument(their_argument_id).descriptive_text()
                 log = "{0} argues to {1}: {2} ({3})".format(sender_id, self.__agent_id, argument_text, received_locution.content())
                 Broadcaster().publish("/log/raw", log)
 
-                # Read useful information from their argument.
-                if their_argument_id == ArgumentID.CHANGE_YOUR_ROUTE:
-                    self.__current_conflict = received_locution.content()['conflict']
-                elif their_argument_id == ArgumentID.PATH_IS_LONGER:
-                    self.__agents_estimated_plan_lengths[sender_id] = received_locution.content()['path_length']
-
-                def generate_argument(arg_id):
-                    if arg_id == ArgumentID.CHANGE_YOUR_ROUTE:
-                        return Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=arg_id)
-                    elif arg_id == ArgumentID.AT_FINAL_DESTINATION:
-                        if self.__goal == self.__current_pos:
-                            return Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=arg_id)
-                        return None
-                    elif arg_id == ArgumentID.NO_OTHER_PATH_AVAILABLE:
-                        return None # FIXME: Implement this later
-                    elif arg_id == ArgumentID.PATH_IS_LONGER:
-                        if sender_id not in self.__agents_estimated_plan_lengths:
-                            return Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=arg_id,
-                                                path_length=len(self.__plan))
-                        elif len(self.__plan) > self.__agents_estimated_plan_lengths[sender_id]:
-                            return Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=arg_id,
-                                                path_length=len(self.__plan))
-                        return None
-                    elif arg_id == ArgumentID.NOWHERE_TO_MOVE: # FIXME: Implement a proper algorithm to find potential exits.
-                        for neighbour in self.__latest_world_model.neighbours_of(self.__current_pos, 'von_neumann'):
-                            x, y = neighbour
-                            if self.__latest_world_model.cells[x][y] == EMPTY:
-                                return None
-                        return Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=arg_id)
 
                 # Time to fight back.
                 argument_possibilities = AF.arguments_that_attack(their_argument_id)
                 rebuttals = {}
                 for argument_id in argument_possibilities:
                     print("Argument_id: {}".format(argument_id))
-                    rebuttals[argument_id] = generate_argument(argument_id)
+                    sender = self.__simulator.agent(sender_id)
+                    if AF.argument(argument_id).generate(self, sender):
+                        rebuttals[argument_id] = AF.argument(argument_id)
                     # generate_argument(argument_id)
                     print("Hello")
                 # Remove arguments that have already been used.
@@ -494,7 +469,7 @@ class Agent:
                 acceptable_arguments = []
                 for arg in gen:
                     acceptable_arguments.append(arg)
-                    print("Plausible argument from {}: {}".format(their_argument_id, argument_id))
+                    print("Plausible argument from {}: {}".format(their_argument_id, arg))
 
                 if len(acceptable_arguments) > 0:
                     # Rebuttal.
@@ -502,8 +477,9 @@ class Agent:
                     chosen_arg = np.random.randint(0, len(acceptable_arguments))
                     print("Acceptable arguments: {}".format(acceptable_arguments))
                     print("Chosen argument: {}".format(chosen_arg))
-                    locution = acceptable_arguments[chosen_arg]
-                    self.__locution_broker.send_locution(self.__agent_id, sender_id, locution)
+                    chosen_arg_id = acceptable_arguments[chosen_arg].id()
+                    locution = Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=chosen_arg_id)
+                    self.__simulator.send_locution(self.__agent_id, sender_id, locution)
                 else:
                     # Concede defeat.
                     self.__conceding_to_agents.add(sender_id)
@@ -512,7 +488,7 @@ class Agent:
                     # Check if it knows the winner's intentions.
                     if sender_id not in self.__agents_estimated_plans:
                         locution = Locution(ActType.ASK, ContentType.WAYPOINTS)
-                        self.__locution_broker.send_locution(self.__agent_id, sender_id, locution)
+                        self.__simulator.send_locution(self.__agent_id, sender_id, locution)
                     self.reroute_avoiding()
                     log = "{0} rerouted to {1}".format(self.__agent_id, self.__plan)
                     Broadcaster().publish("/log/raw", log)

@@ -1,6 +1,7 @@
 from culture import Culture
 from argument import Argument, ArgumentationFramework
 from agent import Agent
+from enum import Enum
 
 class EasyCulture(Culture):
     def __init__(self):
@@ -9,8 +10,6 @@ class EasyCulture(Culture):
         self.name = "Easy"
         self.properties = {"rank": 0,
                            "tasked_status": False}
-
-
 
     def create_arguments(self):
         """
@@ -34,10 +33,15 @@ class EasyCulture(Culture):
             if not (hasattr(my, "tasked_status") and hasattr(their, "tasked_status")):
                 print("EasyCulture::arg2_generator: Attribute 'tasked_status' not found.")
                 return False
-            return my.tasked_status == True and their.tasked_status == False
+            return my.tasked_status is True and their.tasked_status is False
         arg2.set_generator(arg2_generator)
 
         self.argumentation_framework.add_arguments([motion, arg1, arg2])
+
+    class ArgumentID(Enum):
+        CHANGE_YOUR_ROUTE = 0
+        RANK_IS_HIGHER = 1
+        I_AM_TASKED = 2
 
     def define_attacks(self):
         """

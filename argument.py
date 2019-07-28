@@ -35,9 +35,9 @@ class Argument:
     def set_generator(self, generator):
         self.__generator = generator
 
-    def generate(self):
+    def generate(self, me, they):
         if self.__generator is not None:
-            return self.__generator()
+            return self.__generator(me, they)
 
 
 class ArgumentationFramework:
@@ -63,10 +63,10 @@ class ArgumentationFramework:
         self.__attacked_by[attacked_id].add(attacker_id)
 
     def arguments_that_attack(self, argument_id):
-        return self.__attacked_by[argument_id]
+        return self.__attacked_by.get(argument_id, set())
 
     def arguments_attacked_by(self, argument_id):
-        return self.__attacks[argument_id]
+        return self.__attacks.get(argument_id, set())
 
     def argument(self, argument_id):
         return self.__arguments[argument_id]
