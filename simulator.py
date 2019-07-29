@@ -5,6 +5,8 @@ from agent import Agent
 from utils import *
 from edict import Broadcaster
 from cultures.easy import EasyCulture
+from cultures.medium import MediumCulture
+
 from argument import *
 
 
@@ -21,7 +23,7 @@ class Simulator:
         self.__height = h
         self.__current_time_step = 0
 
-        self.__culture = EasyCulture()
+        self.__culture = MediumCulture()
 
         if filename:
             self.load_grid(filename)
@@ -140,8 +142,7 @@ class Simulator:
             if success:
                 self.__agents[id] = Agent(id, (self.__width, self.__height), self)
                 self.__agents[id].set_culture(self.__culture)
-                self.__agents[id].assign_property_value("rank", np.random.randint(1,7))  # TODO: Create mechanism to assign values via culture
-                self.__agents[id].assign_property_value("tasked_status", True if np.random.randint(0, 2) == 0 else False)
+                self.__culture.initialise_random_values(self.__agents[id])
 
     def add_agent(self, coord, agent_id=None):
         if agent_id is None:
@@ -154,8 +155,7 @@ class Simulator:
         if success:
             self.__agents[agent_id] = Agent(agent_id, (self.__width, self.__height), self)
             self.__agents[agent_id].set_culture(self.__culture)
-            self.__agents[agent_id].assign_property_value("rank", np.random.randint(1, 7))  # TODO: Create mechanism to assign values via culture
-            self.__agents[agent_id].assign_property_value("tasked_status", True if np.random.randint(0, 2) == 1 else False)
+            self.__culture.initialise_random_values(self.__agents[agent_id])
 
 
     def erase_item(self, coord):

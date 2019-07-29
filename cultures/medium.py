@@ -4,40 +4,45 @@ from agent import Agent
 from enum import Enum
 import numpy as np
 
-class EasyCulture(Culture):
+class MediumCulture(Culture):
     def __init__(self):
         # Properties of the culture with their default values go in self.properties.
         super().__init__()
-        self.name = "Easy"
+        self.name = "Medium"
         self.properties = {"rank": 0,
-                           "tasked_status": False}
+                           "tasked_status": False,
+                           "task_importance": 0}
 
     def create_arguments(self):
         """
         Defines set of arguments present in the culture.
         :return: Set of arguments.
         """
+        args = []
 
         motion = Argument(0, "You must change your route.")
         motion.set_generator(lambda gen: True)  # Propositional arguments are always valid.
+        args.append(motion)
 
         arg1 = Argument(1, "My rank is higher than yours.")
         def arg1_generator(my: Agent, their: Agent):
-            if not (hasattr(my, "rank") and hasattr(their, "rank")):
-                print("EasyCulture::arg1_generator: Attribute 'rank' not found.")
-                return False
             return my.rank > their.rank
         arg1.set_generator(arg1_generator)
+        args.append(arg1)
 
         arg2 = Argument(2, "I am currently performing a task and you are not.")
         def arg2_generator(my: Agent, their: Agent):
-            if not (hasattr(my, "tasked_status") and hasattr(their, "tasked_status")):
-                print("EasyCulture::arg2_generator: Attribute 'tasked_status' not found.")
-                return False
             return my.tasked_status is True and their.tasked_status is False
         arg2.set_generator(arg2_generator)
+        args.append(arg2)
 
-        self.argumentation_framework.add_arguments([motion, arg1, arg2])
+        arg3 = Argument(3, "I have been tasked by someone with a higher rank.")
+        def arg3_generator(my: Agent, their: Agent):
+            return my.task_importance > their.rank and my.task_importance > their.task_importance
+        arg3.set_generator(arg3_generator)
+        args.append(arg3)
+
+        self.argumentation_framework.add_arguments(args)
 
     def initialise_random_values(self, agent: Agent):
         rank = np.random.randint(1, 7)
@@ -46,10 +51,14 @@ class EasyCulture(Culture):
         tasked_status = True if np.random.randint(0, 2) == 0 else False
         agent.assign_property_value("tasked_status", tasked_status)
 
+        task_importance = np.random.randint(rank, 7)
+        agent.assign_property_value("task_importance", task_importance)
+
     class ArgumentID(Enum):
         CHANGE_YOUR_ROUTE = 0
         RANK_IS_HIGHER = 1
         I_AM_TASKED = 2
+        TASK_IMPORTANCE = 3
 
     def define_attacks(self):
         """
@@ -59,10 +68,13 @@ class EasyCulture(Culture):
         motion_id = 0
         arg1_id = 1
         arg2_id = 2
+        arg3_id = 3
 
         self.argumentation_framework.add_attack(arg1_id, motion_id)
         self.argumentation_framework.add_attack(arg2_id, motion_id)
         self.argumentation_framework.add_attack(arg2_id, arg1_id)
+        self.argumentation_framework.add_attack(arg2_id, arg3_id)
+        self.argumentation_framework.add_attack(arg3_id, arg1_id)
 
 
 

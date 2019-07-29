@@ -1,4 +1,5 @@
 from argument import ArgumentationFramework
+from agent import Agent
 
 class Culture:
     def __init__(self):
@@ -11,6 +12,9 @@ class Culture:
         self.define_attacks()
 
     def create_arguments(self):
+        pass
+
+    def initialise_random_values(self, agent: Agent):
         pass
 
     def define_attacks(self):
