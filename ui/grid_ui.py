@@ -34,13 +34,13 @@ class GridCellUI(QGraphicsRectItem):
     def set_value(self, value):
         self.cell_value = value
         if self.cell_value == EMPTY:
-            self.setBrush(QBrush(Qt.white))
+            self.setBrush(QBrush(QColor(222, 183, 120)))
             self.setPen(QPen(Qt.black))
             self.circle_item.setVisible(False)
         elif self.cell_value == GLOBAL_OBSTACLE:
             brush = QBrush()
             brush.setStyle(Qt.SolidPattern)
-            brush.setColor(Qt.black)
+            brush.setColor(QColor(41, 29, 25))
             self.setBrush(brush)
         elif self.cell_value == LOCAL_OBSTACLE:
             brush = QBrush()
@@ -51,8 +51,8 @@ class GridCellUI(QGraphicsRectItem):
             self.circle_item.setRect(0, 0, CELL_SIZE, CELL_SIZE)
             self.circle_item.setVisible(True)
             brush = QBrush()
-            brush.setStyle(Qt.Dense2Pattern)
-            brush.setColor(Qt.lightGray)
+            brush.setStyle(Qt.SolidPattern)
+            brush.setColor(QColor(59, 102, 43))
             self.circle_item.setBrush(brush)
             self.text_item.setVisible(True)
             self.text_item.setText("{}".format(self.cell_value))
@@ -104,6 +104,13 @@ class AgentVisibilityUI(QGraphicsRectItem):
         pen.setWidth(3)
         self.setPen(pen)
         self.setRect(x, y, width, height)
+
+class ToolTipUI(QGraphicsRectItem):
+    def __init__(self, origin, agent_id):
+        super(ToolTipUI, self).__init__()
+        self.origin_x, self.origin_y = origin
+        x = self.origin_x * CELL_SIZE
+        y = self.origin_y * CELL_SIZE
 
 class PathUI(QGraphicsRectItem):
     def __init__(self, path, parent=None):

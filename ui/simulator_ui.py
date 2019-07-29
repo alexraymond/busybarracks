@@ -3,7 +3,7 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from simulator import Simulator
 from ui.grid_ui import GridUI
-from ui.logger_ui import LoggerUI
+from ui.logger_ui import SidePanelUI
 from edict import Broadcaster
 from grid2d import LOCAL_OBSTACLE
 
@@ -17,7 +17,7 @@ class SimulatorUI(QMainWindow):
 
         self.simulator = Simulator(width, height, filename)
 
-        self.setWindowTitle("Path Deconflictatron 3000.1 Premium")
+        self.setWindowTitle("Busy Barracks")
 
         self.file_menu = self.menuBar().addMenu("File")
 
@@ -68,7 +68,7 @@ class SimulatorUI(QMainWindow):
         # Creating logger #
         ###################
 
-        logger = LoggerUI(self)
+        logger = SidePanelUI(self)
         side_dock_widget = QDockWidget("Simulation Logger", self)
         side_dock_widget.setAllowedAreas(Qt.AllDockWidgetAreas)
         side_dock_widget.setWidget(logger)
@@ -198,12 +198,15 @@ class SimulatorUI(QMainWindow):
                     self.simulator.assign_goal(self.agent_selected, coord)
                     self.current_edit_action.setChecked(False)
 
-        self.update_step()
+            self.update_step()
         cell_value = self.simulator.cell_at(coord)
-        if cell_value > 0: # If cell pressed is agent.
+        if cell_value > 0:  # If cell pressed is agent.
             self.grid_view.select_agent(cell_value, coord)
             self.assign_goal_action.setEnabled(True)
             self.agent_selected = cell_value
+
+            # Request properties to display in side panel.
+            Broadcaster().publish("/request_agent_stats", self.agent_selected)
         else:
             self.agent_selected = None
             self.assign_goal_action.setDisabled(True)

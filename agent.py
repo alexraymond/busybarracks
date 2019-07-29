@@ -34,14 +34,30 @@ class Agent:
 
         self.__culture = None
 
+        Broadcaster().subscribe("/request_agent_stats", self.send_properties)
+
+    def culture_properties(self):
+        if self.__culture is None:
+            return
+        return self.__culture.__dict__.get("properties", None)
+
+    def send_properties(self, agent_id):
+        if self.__agent_id != agent_id:
+            return
+        text = "id: " + str(agent_id) + "\n"
+        for property in self.culture_properties():
+            value = self.__dict__.get(property, None)
+            text += str(property) + ": " + str(value) + "\n"
+        Broadcaster().publish("/property_label/raw", text)
+
+
     def set_culture(self, culture):
         self.__culture = culture
-        culture_properties = culture.__dict__.get("properties", None)
-        if culture_properties is None:
+        if self.culture_properties() is None:
             print("Agent::set_culture: Culture {} has no properties.".format(culture.name))
             return
-        for attr, default_value in culture_properties.items():
-            self.__setattr__(attr, default_value)
+        for property, default_value in self.culture_properties().items():
+            self.__setattr__(property, default_value)
 
     def assign_property_value(self, property, value):
         if hasattr(self, property) is False:
