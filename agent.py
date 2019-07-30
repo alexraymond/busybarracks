@@ -8,7 +8,6 @@ from utils import *
 from locution import *
 
 
-
 class Agent:
     def __init__(self, agent_id, grid_dimensions, simulator):
         self.__goal = None

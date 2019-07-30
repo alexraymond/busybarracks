@@ -1,5 +1,13 @@
+from enum import Enum
 POS = 0
 TIME_STEP = 1
+
+class MoveDirection(Enum):
+    WAIT = 0
+    UP = 1
+    DOWN = 2
+    LEFT = 3
+    RIGHT = 4
 
 def in_visibility_range(range, pos, cell):
     x_pos, y_pos = pos

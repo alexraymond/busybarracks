@@ -3,7 +3,7 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from simulator import Simulator
 from ui.grid_ui import GridUI
-from ui.logger_ui import SidePanelUI
+from ui.side_panel_ui import SidePanelUI
 from edict import Broadcaster
 from grid2d import LOCAL_OBSTACLE
 
@@ -32,9 +32,10 @@ class SimulatorUI(QMainWindow):
         self.agent_selected = None
         self.current_edit_action = QAction("void")
 
-        #######################################
-        # Creating simulation progress widget #
-        #######################################
+        # TODO: Re-add progress widget later
+        # #######################################
+        # # Creating simulation progress widget #
+        # #######################################
 
         progress_widget = QWidget(self)
 
@@ -64,16 +65,18 @@ class SimulatorUI(QMainWindow):
         h_layout.addWidget(self.end_button)
         progress_widget.setLayout(h_layout)
 
-        ###################
-        # Creating logger #
-        ###################
+        #######################
+        # Creating side panel #
+        #######################
 
-        logger = SidePanelUI(self)
+        side_panel = SidePanelUI(self)
         side_dock_widget = QDockWidget("Simulation Logger", self)
         side_dock_widget.setAllowedAreas(Qt.AllDockWidgetAreas)
-        side_dock_widget.setWidget(logger)
+        side_dock_widget.setWidget(side_panel)
         side_dock_widget.setFeatures(QDockWidget.DockWidgetMovable)
         self.addDockWidget(Qt.RightDockWidgetArea, side_dock_widget)
+        side_panel.button_cluster.go_button.clicked.connect(self.advance_simulation)
+
 
         ####################
         # Creating actions #
@@ -124,11 +127,13 @@ class SimulatorUI(QMainWindow):
         self.setCentralWidget(self.grid_view)
         self.addToolBar(Qt.TopToolBarArea, self.toolbar)
 
-        bottom_dock_widget = QDockWidget("Simulation Progress", self)
-        bottom_dock_widget.setAllowedAreas(Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea)
-        bottom_dock_widget.setWidget(progress_widget)
-        bottom_dock_widget.setFeatures(QDockWidget.DockWidgetMovable)
-        self.addDockWidget(Qt.BottomDockWidgetArea, bottom_dock_widget)
+        # TODO: Re-add progress widget later
+        # bottom_dock_widget = QDockWidget("Simulation Progress", self)
+        # bottom_dock_widget.setAllowedAreas(Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea)
+        # bottom_dock_widget.setWidget(progress_widget)
+        # bottom_dock_widget.setFeatures(QDockWidget.DockWidgetMovable)
+        # self.addDockWidget(Qt.BottomDockWidgetArea, bottom_dock_widget)
+        progress_widget.setVisible(False)
 
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
 
@@ -144,9 +149,11 @@ class SimulatorUI(QMainWindow):
         self.show_paths_action.toggled.connect(self.show_paths_toggled)
         self.assign_random_goals_action.triggered.connect(self.assign_random_goals)
 
-        self.step_slider.valueChanged.connect(self.update_step)
+        # self.step_slider.valueChanged.connect(self.update_step)
 
         self.update_step(0)
+
+
 
         #######################
         # Edict subscriptions #
@@ -199,7 +206,7 @@ class SimulatorUI(QMainWindow):
                     self.current_edit_action.setChecked(False)
 
             self.update_step()
-        cell_value = self.simulator.cell_at(coord)
+        cell_value = self.simulator.cell_at(coord, self.step_slider.value())
         if cell_value > 0:  # If cell pressed is agent.
             self.grid_view.select_agent(cell_value, coord)
             self.assign_goal_action.setEnabled(True)
@@ -293,7 +300,9 @@ class SimulatorUI(QMainWindow):
         self.grid_view.update_agent_plans(plans)
         self.grid_view.update_agent_visibilities(visibilities)
 
-    def update_step(self, step = 0):
+    def update_step(self, step = -1):
+        if step == -1:
+            step = self.step_slider.value()
         maximum = self.simulator.simulation_size() - 1
         self.step_slider.setMaximum(maximum)
         self.step_slider.setValue(step)
