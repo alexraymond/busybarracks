@@ -33,7 +33,7 @@ class Agent:
 
         self.__culture = None
 
-        self.score = 500
+        self.score = 100
         self.__human_controlled = False
 
         Broadcaster().subscribe("/request_agent_stats", self.send_properties)
@@ -44,6 +44,11 @@ class Agent:
             if self.__current_pos is not None:
                 self.__plan = [self.__current_pos]
             Broadcaster().subscribe("/direction_chosen", self.set_direction)
+            Broadcaster().subscribe("/new_time_step", self.change_score)
+
+    def change_score(self, delta = -1):
+        self.score += delta
+        Broadcaster().publish("/score_changed", self.score)
 
     def set_direction(self, direction):
         if self.__human_controlled is False:
@@ -62,6 +67,7 @@ class Agent:
         else:
             self.__plan.append(((x, y), self.__current_time_step+1))
         self.__previous_plans[self.__current_time_step] = copy.deepcopy(self.__plan)
+        Broadcaster().publish("/score_changed", self.score)
 
     def culture_properties(self):
         if self.__culture is None:
@@ -547,8 +553,6 @@ class Agent:
         self.__arguments_used_this_round = set()
         self.__negotiated_with = set()
         self.__current_conflict = None
-
-
 
     def current_pos(self):
         return self.__current_pos

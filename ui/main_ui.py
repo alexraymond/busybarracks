@@ -24,6 +24,7 @@ class Application():
             dimensions = file.readline().split()
             if len(dimensions) == 2:
                 self.simulator = SimulatorUI(int(dimensions[0]), int(dimensions[1]), filename)
+                self.simulator.setMinimumSize(600, 800)
                 self.simulator.show()
             else:
                 print("Application::load_existing_grid: Ill-formed file!")

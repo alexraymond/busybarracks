@@ -153,8 +153,6 @@ class SimulatorUI(QMainWindow):
 
         self.update_step(0)
 
-
-
         #######################
         # Edict subscriptions #
         #######################

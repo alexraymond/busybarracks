@@ -188,12 +188,12 @@ class Simulator:
         return num_cells - len(self.__obstacles) - len(self.__agents)
 
     def simulate_step(self):
-        self.__world_model.lock_for_edits()
         t = self.__current_time_step
+        Broadcaster().publish("/log/raw", "\n*** END OF STEP {} ***\n".format(t))
+        self.__world_model.lock_for_edits()
         if COMMUNICATION:
             for agent in self.__agents.values():
                 agent.communicate()
-        Broadcaster().publish("/log/raw", "\n*** END OF STEP {} ***\n".format(t))
         moves = {}
         still_agents = 0
         for agent in self.__agents.values():
@@ -216,6 +216,7 @@ class Simulator:
             # self.update_agents(self.__current_time_step)
             print("Grid changed from \n{} to \n{}".format(self.grid_at(self.__current_time_step - 1).transpose(),
                                                           self.grid_at(self.__current_time_step).transpose()))
+            Broadcaster().publish("/new_time_step")
         return result
 
     def send_locution(self, source_id, destination_id, locution):
