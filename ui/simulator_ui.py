@@ -295,18 +295,21 @@ class SimulatorUI(QMainWindow):
         plans = {}
         visibilities = {}
         positions = {}
+        goals = {}
         for agent in agents.values():
             positions[agent.agent_id()] = agent.current_pos()
             world_models[agent.agent_id()] = agent.world_model_at(step)
             plans[agent.agent_id()] = agent.plan_at(step)
             visibilities[agent.agent_id()] = agent.visibility_radius()
+            goals[agent.agent_id()] = agent.goal()
             print("Received plan for agent {} : \n{}".format(agent.agent_id(), plans[agent.agent_id()]))
         self.grid_view.update_agent_positions(positions)
         self.grid_view.update_agent_models(world_models)
         self.grid_view.update_agent_plans(plans)
         self.grid_view.update_agent_visibilities(visibilities)
+        self.grid_view.update_agent_goals(goals)
 
-    def update_step(self, step = -1):
+    def update_step(self, step=-1):
         if step == -1:
             step = self.step_slider.value()
         maximum = self.simulator.simulation_size() - 1
@@ -317,6 +320,7 @@ class SimulatorUI(QMainWindow):
         else:
             self.forward_button.setIcon(QIcon("icons/forward.png"))
         self.step_slider_label.setText("Step: {}".format(step))
+        self.update_agents()  # TODO: Remove duplicate call
         self.grid_view.set_base_grid(self.simulator.grid_at(step))
         self.grid_view.draw_base_grid()
         self.update_agents()

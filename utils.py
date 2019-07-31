@@ -9,6 +9,9 @@ class MoveDirection(Enum):
     LEFT = 3
     RIGHT = 4
 
+class SpecialCellType(Enum):
+    PLAYER_GOAL = 0
+
 def in_visibility_range(range, pos, cell):
     x_pos, y_pos = pos
     x_cell, y_cell = cell

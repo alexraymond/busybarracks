@@ -317,6 +317,10 @@ class Agent:
             if new_direction != current_direction:
                 turns.append(self.__plan[i])
                 current_direction = new_direction
+        # if self.__human_controlled is True:
+        #     estimated_path = self.estimated_path((self.__current_pos, self.__current_time_step), self.__goal)
+        #     turns.append(estimated_path[-1])
+        # else:
         turns.append(self.__plan[-1])
         return turns
 

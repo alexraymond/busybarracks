@@ -12,7 +12,7 @@ CELL_SIZE = 50
 
 
 class GridCellUI(QGraphicsRectItem):
-    def __init__(self, cell_value, x_coord, y_coord, parent=None):
+    def __init__(self, cell_value, x_coord, y_coord, special_cell=None, parent=None):
         super(GridCellUI, self).__init__()
         self.cell_value = cell_value
         self.setRect(0, 0, CELL_SIZE, CELL_SIZE)
@@ -23,6 +23,7 @@ class GridCellUI(QGraphicsRectItem):
 
         self.x_coord = x_coord
         self.y_coord = y_coord
+        self.special_cell = special_cell
 
         self.set_value(cell_value)
         self.hover_enter_callback = None
@@ -31,9 +32,13 @@ class GridCellUI(QGraphicsRectItem):
         self.setAcceptHoverEvents(True)
         self.setAcceptDrops(True)
 
-    def set_value(self, value):
+    def set_value(self, value, special_cell=None):
         self.cell_value = value
-        if self.cell_value == EMPTY:
+        if special_cell == SpecialCellType.PLAYER_GOAL:
+            self.setBrush(QBrush(QColor(161, 32, 32)))
+            self.setPen(QPen(QColor(222, 183, 120)))
+            self.circle_item.setVisible(False)
+        elif self.cell_value == EMPTY:
             self.setBrush(QBrush(QColor(222, 183, 120)))
             self.setPen(QPen(Qt.black))
             self.circle_item.setVisible(False)
@@ -47,12 +52,15 @@ class GridCellUI(QGraphicsRectItem):
             brush.setStyle(Qt.DiagCrossPattern)
             brush.setColor(Qt.black)
             self.setBrush(brush)
-        else: # Is an agent
+        if value > 0:  # Is an agent
             self.circle_item.setRect(0, 0, CELL_SIZE, CELL_SIZE)
             self.circle_item.setVisible(True)
             brush = QBrush()
             brush.setStyle(Qt.SolidPattern)
-            brush.setColor(QColor(59, 102, 43))
+            if self.cell_value == 1:  # Human agent
+                brush.setColor(QColor(161, 32, 32))  # Red
+            else:
+                brush.setColor(QColor(59, 102, 43))  # Green
             self.circle_item.setBrush(brush)
             self.text_item.setVisible(True)
             self.text_item.setText("{}".format(self.cell_value))
@@ -167,7 +175,6 @@ class PathUI(QGraphicsRectItem):
 
 
 class GridUI(QGraphicsView):
-
     def __init__(self, x_cells, y_cells, parent=None):
         super(GridUI, self).__init__(parent)
         self.grid_scene = QGraphicsScene()
@@ -179,11 +186,13 @@ class GridUI(QGraphicsView):
         self.agent_plans = {}
         self.agent_visibilities = {}
         self.agent_positions = {}
+        self.agent_goals = {}
         self.ui_paths = {}
         self.ui_visibilities = {}
         self.base_grid = np.zeros((x_cells, y_cells), dtype=np.int)
         self.keep_paths_on = False
         self.current_selection = None
+        self.human_goal = None
         for i in range(x_cells):
             self.cells[i] = {}
             for j in range(y_cells):
@@ -207,7 +216,10 @@ class GridUI(QGraphicsView):
         self.refresh_paths()
         for i in range(self.x_cells):
             for j in range(self.y_cells):
-                self.cells[i][j].set_value(grid[i][j])
+                special_cell = None
+                if self.human_goal == (i, j):
+                    special_cell = SpecialCellType.PLAYER_GOAL
+                self.cells[i][j].set_value(grid[i][j], special_cell)
 
     def update_agent_positions(self, positions):
         self.agent_positions = positions
@@ -220,6 +232,10 @@ class GridUI(QGraphicsView):
 
     def update_agent_visibilities(self, visibilities):
         self.agent_visibilities = visibilities
+
+    def update_agent_goals(self, goals):
+        self.agent_goals = goals
+        self.human_goal = self.agent_goals.get(1, None)
 
     def draw_visibility(self, agent_id):
         # FIXME: Known bug -- visibility is not drawn when agent doesn't have a plan.
