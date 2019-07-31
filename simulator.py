@@ -156,6 +156,8 @@ class Simulator:
             self.__agents[agent_id] = Agent(agent_id, (self.__width, self.__height), self)
             self.__agents[agent_id].set_culture(self.__culture)
             self.__culture.initialise_random_values(self.__agents[agent_id])
+            if agent_id == 1:  # By convention, agent 1 is always going to be the human player.
+                self.__agents[agent_id].set_human_control(True)
 
 
     def erase_item(self, coord):

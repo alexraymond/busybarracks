@@ -117,7 +117,7 @@ class PathUI(QGraphicsRectItem):
         super(PathUI, self).__init__()
         self.path = path
         self.lines = []
-        if self.path is None:
+        if self.path is None or len(self.path) == 0:
             return
         self.origin_x = path[0][POS][0]
         self.origin_y = path[0][POS][1]
@@ -228,7 +228,8 @@ class GridUI(QGraphicsView):
         self.grid_scene.addItem(visibility)
 
     def draw_path(self, agent_id):
-        if self.agent_plans.get(agent_id, None) is None:
+        plan = self.agent_plans.get(agent_id, None)
+        if plan is None or len(plan) == 0:
             return
         path = PathUI(self.agent_plans[agent_id], self)
         self.ui_paths[agent_id] = path

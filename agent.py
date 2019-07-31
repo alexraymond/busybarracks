@@ -33,7 +33,35 @@ class Agent:
 
         self.__culture = None
 
+        self.score = 500
+        self.__human_controlled = False
+
         Broadcaster().subscribe("/request_agent_stats", self.send_properties)
+
+    def set_human_control(self, control):
+        self.__human_controlled = control
+        if self.__human_controlled is True:
+            if self.__current_pos is not None:
+                self.__plan = [self.__current_pos]
+            Broadcaster().subscribe("/direction_chosen", self.set_direction)
+
+    def set_direction(self, direction):
+        if self.__human_controlled is False:
+            return
+        if self.__current_pos is not None:
+            self.__plan = [(self.__current_pos, self.__current_time_step)]
+        x, y = self.__current_pos
+        if direction == MoveDirection.UP:
+            self.__plan.append(((x, y - 1), self.__current_time_step+1))
+        elif direction == MoveDirection.DOWN:
+            self.__plan.append(((x, y + 1), self.__current_time_step+1))
+        elif direction == MoveDirection.LEFT:
+            self.__plan.append(((x - 1, y), self.__current_time_step+1))
+        elif direction == MoveDirection.RIGHT:
+            self.__plan.append(((x + 1, y), self.__current_time_step+1))
+        else:
+            self.__plan.append(((x, y), self.__current_time_step+1))
+        self.__previous_plans[self.__current_time_step] = copy.deepcopy(self.__plan)
 
     def culture_properties(self):
         if self.__culture is None:
@@ -49,7 +77,6 @@ class Agent:
             text += str(property) + ": " + str(value) + "\n"
         Broadcaster().publish("/property_label/raw", text)
 
-
     def set_culture(self, culture):
         self.__culture = culture
         if self.culture_properties() is None:
@@ -63,8 +90,6 @@ class Agent:
             print("Agent::assign_property_value: Property {} not found within agent.".format(property))
             return
         self.__setattr__(property, value)
-
-
 
     def agent_id(self):
         return self.__agent_id
@@ -186,7 +211,8 @@ class Agent:
         return None
 
     def find_path_3D_search(self, origin, goal, initial_time_step=None, concede_to_agents=True, timeout=100):
-
+        if self.__human_controlled is True:
+            return self.__plan
         if initial_time_step is None:
             initial_time_step = self.__current_time_step
 

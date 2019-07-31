@@ -65,19 +65,6 @@ class SimulatorUI(QMainWindow):
         h_layout.addWidget(self.end_button)
         progress_widget.setLayout(h_layout)
 
-        #######################
-        # Creating side panel #
-        #######################
-
-        side_panel = SidePanelUI(self)
-        side_dock_widget = QDockWidget("Simulation Logger", self)
-        side_dock_widget.setAllowedAreas(Qt.AllDockWidgetAreas)
-        side_dock_widget.setWidget(side_panel)
-        side_dock_widget.setFeatures(QDockWidget.DockWidgetMovable)
-        self.addDockWidget(Qt.RightDockWidgetArea, side_dock_widget)
-        side_panel.button_cluster.go_button.clicked.connect(self.advance_simulation)
-
-
         ####################
         # Creating actions #
         ####################
@@ -127,6 +114,19 @@ class SimulatorUI(QMainWindow):
         self.setCentralWidget(self.grid_view)
         self.addToolBar(Qt.TopToolBarArea, self.toolbar)
 
+        #######################
+        # Creating side panel #
+        #######################
+
+        self.side_panel = SidePanelUI(self)
+        self.side_dock_widget = QDockWidget("Simulation Logger", self)
+        self.side_dock_widget.setAllowedAreas(Qt.AllDockWidgetAreas)
+        self.side_dock_widget.setWidget(self.side_panel)
+        self.side_dock_widget.setFeatures(QDockWidget.DockWidgetMovable)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.side_dock_widget)
+        self.side_panel.button_cluster.button_group.buttonClicked.connect(self.update_agents)
+        self.side_panel.button_cluster.go_button.clicked.connect(self.advance_simulation)
+
         # TODO: Re-add progress widget later
         # bottom_dock_widget = QDockWidget("Simulation Progress", self)
         # bottom_dock_widget.setAllowedAreas(Qt.TopDockWidgetArea | Qt.BottomDockWidgetArea)
@@ -168,11 +168,18 @@ class SimulatorUI(QMainWindow):
     def skip_to_end_simulation(self):
         self.step_slider.setValue(self.step_slider.maximum())
 
+    def reset_human_direction(self):
+        button_group = self.side_panel.button_cluster.button_group
+        if len(button_group.buttons()) > 0:
+            Broadcaster().publish("/direction_chosen", self.side_panel.button_cluster.current_direction)
+            self.update_agents()
+
     def advance_simulation(self):
         if self.current_step() == self.step_slider.maximum():
             self.run_step()
             return
         self.step_slider.setValue(self.current_step() + 1)
+
 
     def retreat_simulation(self):
         if self.current_step() > 0:
@@ -255,6 +262,7 @@ class SimulatorUI(QMainWindow):
         success = self.simulator.simulate_step()
         if success:
             self.update_step(self.step_slider.value() + 1)
+            self.reset_human_direction()  # TODO: Remove hideous workaround
         else:
             message_box = QMessageBox()
             message_box.setText("Failed to perform move.")

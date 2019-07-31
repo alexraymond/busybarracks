@@ -76,6 +76,7 @@ class ButtonClusterUI(QWidget):
             self.current_direction = MoveDirection.WAIT
         else:
             self.current_direction = None
+        Broadcaster().publish("/direction_chosen", self.current_direction)
 
 
 class SidePanelUI(QWidget):
