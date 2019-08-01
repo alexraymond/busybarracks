@@ -35,6 +35,7 @@ class Agent:
 
         self.score = 100
         self.__human_controlled = False
+        self.__current_direction = None
 
         Broadcaster().subscribe("/request_agent_stats", self.send_properties)
 
@@ -42,7 +43,7 @@ class Agent:
         self.__human_controlled = control
         if self.__human_controlled is True:
             if self.__current_pos is not None:
-                self.__plan = [self.__current_pos]
+                self.__plan = [(self.__current_pos, self.__current_time_step)]
             Broadcaster().subscribe("/direction_chosen", self.set_direction)
             Broadcaster().subscribe("/new_time_step", self.change_score)
 
@@ -54,18 +55,19 @@ class Agent:
         if self.__human_controlled is False:
             return
         if self.__current_pos is not None:
-            self.__plan = [(self.__current_pos, self.__current_time_step)]
+            self.__plan[0] = (self.__current_pos, self.__current_time_step)
         x, y = self.__current_pos
         if direction == MoveDirection.UP:
-            self.__plan.append(((x, y - 1), self.__current_time_step+1))
+            self.__plan[1] = ((x, y - 1), self.__current_time_step+1)
         elif direction == MoveDirection.DOWN:
-            self.__plan.append(((x, y + 1), self.__current_time_step+1))
+            self.__plan[1] = ((x, y + 1), self.__current_time_step+1)
         elif direction == MoveDirection.LEFT:
-            self.__plan.append(((x - 1, y), self.__current_time_step+1))
+            self.__plan[1] = ((x - 1, y), self.__current_time_step+1)
         elif direction == MoveDirection.RIGHT:
-            self.__plan.append(((x + 1, y), self.__current_time_step+1))
+            self.__plan[1] = ((x + 1, y), self.__current_time_step+1)
         else:
-            self.__plan.append(((x, y), self.__current_time_step+1))
+            self.__plan[1] = ((x, y), self.__current_time_step+1)
+        self.__current_direction = direction
         self.__previous_plans[self.__current_time_step] = copy.deepcopy(self.__plan)
         Broadcaster().publish("/score_changed", self.score)
 
@@ -167,6 +169,8 @@ class Agent:
             return
         if self.__current_pos != self.__goal:
             self.__plan = self.find_path_3D_search((self.__current_pos, self.__current_time_step), self.__goal)
+            if self.__human_controlled:
+                self.set_direction(self.__current_direction)
             if overwrite or (len(self.__previous_plans) <= 1 or time_step not in self.__previous_plans):
                 self.__previous_plans[time_step] = copy.deepcopy(self.__plan)
         print("Path from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.__plan))
@@ -217,8 +221,8 @@ class Agent:
         return None
 
     def find_path_3D_search(self, origin, goal, initial_time_step=None, concede_to_agents=True, timeout=100):
-        if self.__human_controlled is True:
-            return self.__plan
+        # if self.__human_controlled is True:
+        #     return self.__plan
         if initial_time_step is None:
             initial_time_step = self.__current_time_step
 
@@ -258,6 +262,8 @@ class Agent:
                             time_step = current[TIME_STEP]
                             if current[TIME_STEP] >= their_plan[-1][TIME_STEP]:
                                 time_step = their_plan[-1][TIME_STEP]
+                            a = [pos for pos in their_plan if pos[TIME_STEP] == time_step]
+                            b = a
                             their_position = [pos for pos in their_plan if pos[TIME_STEP] == time_step][0]
                             going_to_their_position = neighbouring_step == (their_position[POS], current[TIME_STEP] + 1)
                             if neighbouring_step in self.__agents_estimated_plans[agent]:
@@ -390,7 +396,10 @@ class Agent:
                 path.extend(leg)
                 origin = waypoints[i]
             last_leg = self.find_path_3D_search(origin, waypoints[-1][POS], initial_time_step=time_step, concede_to_agents=False)
-            path.extend(last_leg[1:]) # Removing first item of last leg because it already appears in previous extension.
+            if len(waypoints) - 1 < 1:
+                path.extend(last_leg)
+            else:
+                path.extend(last_leg[1:]) # Removing first item of last leg because it already appears in previous extension.
         return path
 
 

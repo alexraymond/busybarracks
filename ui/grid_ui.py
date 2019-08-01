@@ -121,7 +121,7 @@ class ToolTipUI(QGraphicsRectItem):
         y = self.origin_y * CELL_SIZE
 
 class PathUI(QGraphicsRectItem):
-    def __init__(self, path, parent=None):
+    def __init__(self, agent_id, path, path_length, parent=None):
         super(PathUI, self).__init__()
         self.path = path
         self.lines = []
@@ -129,15 +129,18 @@ class PathUI(QGraphicsRectItem):
             return
         self.origin_x = path[0][POS][0]
         self.origin_y = path[0][POS][1]
-        self.draw_path()
+        self.agent_id = agent_id
+        self.draw_path(path_length)
 
     def relative(self, pos):
         return (pos[0] - self.origin_x) * CELL_SIZE, (pos[1] - self.origin_y) * CELL_SIZE
 
-    def draw_path(self):
+    def draw_path(self, path_length):
         max_x = max_y = 0
         min_x = min_y = 100000
-        for i in range(len(self.path) - 1):
+        if path_length > len(self.path):
+            path_length = len(self.path)
+        for i in range(path_length - 1):
             from_x, from_y = self.relative(self.path[i][POS])
             to_x, to_y = self.relative(self.path[i + 1][POS])
             if (to_x > max_x):
@@ -169,8 +172,11 @@ class PathUI(QGraphicsRectItem):
 
         # Sets pen to all lines.
         for line in self.lines:
-            pen = QPen(Qt.red)
-            pen.setWidth(3)
+            if self.agent_id == 1:  # Human agent
+                pen = QPen(QColor(161, 32, 32))  # Red
+            else:
+                pen = QPen(QColor(59, 102, 43))  # Green
+            pen.setWidth(5)
             line.setPen(pen)
 
 
@@ -193,6 +199,7 @@ class GridUI(QGraphicsView):
         self.keep_paths_on = False
         self.current_selection = None
         self.human_goal = None
+        self.path_length = 2
         for i in range(x_cells):
             self.cells[i] = {}
             for j in range(y_cells):
@@ -247,7 +254,7 @@ class GridUI(QGraphicsView):
         plan = self.agent_plans.get(agent_id, None)
         if plan is None or len(plan) == 0:
             return
-        path = PathUI(self.agent_plans[agent_id], self)
+        path = PathUI(agent_id, self.agent_plans[agent_id], self.path_length, self)
         self.ui_paths[agent_id] = path
         self.grid_scene.addItem(path)
         origin_x, origin_y = self.agent_plans[agent_id][0][POS]
