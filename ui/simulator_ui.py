@@ -2,6 +2,7 @@ from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from simulator import Simulator
+from interactive_argument import InteractiveArgument
 from ui.grid_ui import GridUI
 from ui.side_panel_ui import SidePanelUI
 from edict import Broadcaster
@@ -153,12 +154,57 @@ class SimulatorUI(QMainWindow):
 
         self.update_step(0)
 
+        ############################
+        # Creating argument widget #
+        ############################
+
+        self.arg_widget = QDialog()
+        self.arg_widget.hide()
+
+
         #######################
         # Edict subscriptions #
         #######################
 
         Broadcaster().subscribe("/cell_pressed", self.cell_pressed)
+        Broadcaster().subscribe("/new_argument", self.show_argument)
         # Broadcaster().subscribe("/model_updated", self.update_agents)
+
+    def show_argument2(self, interactive_argument: InteractiveArgument):
+        print("Showing message box!")
+        print(interactive_argument)
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Agent {} says to you:".format(interactive_argument.sender_id))
+        msg_box.setText(interactive_argument.proposed_argument)
+        buttons = {}
+        for key, argument in interactive_argument.possible_answers.items():
+            button = msg_box.addButton(argument, QMessageBox.AcceptRole)
+            buttons[button] = key
+
+        msg_box.exec_()
+
+    def show_argument(self, interactive_argument: InteractiveArgument):
+        # arg_widget = QWidget()
+        self.arg_widget.setWindowTitle("Agent {} says to you:".format(interactive_argument.sender_id))
+        main_arg_label = QLabel(self.arg_widget)
+        main_arg_label.setText("<i>\"" + interactive_argument.proposed_argument + "\"</i>")
+        buttons = {}
+        for key, argument in interactive_argument.possible_answers.items():
+            button = QPushButton(argument, self.arg_widget)
+            buttons[button] = key  # Inverse dict to find key when pressing button.
+
+        v_layout = QVBoxLayout(self)
+        v_layout.addWidget(main_arg_label)
+        spacer = QSpacerItem(0, 25)
+        # v_layout.addWidget(spacer)
+        for button in buttons.keys():
+            v_layout.addWidget(button)
+
+        # self.setWindowModality(QWidget.Modal)
+        self.arg_widget.setLayout(v_layout)
+        self.arg_widget.setMinimumSize(300, 200)
+        self.arg_widget.exec_()
+
 
     def rewind_simulation(self):
         self.step_slider.setValue(0)
@@ -323,6 +369,7 @@ class SimulatorUI(QMainWindow):
         self.update_agents()  # TODO: Remove duplicate call
         self.grid_view.set_base_grid(self.simulator.grid_at(step))
         self.grid_view.draw_base_grid()
+        self.simulator.communicate()
         self.update_agents()
 
     def current_step(self):

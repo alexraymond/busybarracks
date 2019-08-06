@@ -5,8 +5,10 @@ import copy
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE, LOCAL_OBSTACLE
 from edict import Broadcaster
 from utils import *
+from interactive_argument import InteractiveArgument
 from locution import *
 
+EXPLAINABLE = True
 
 class Agent:
     def __init__(self, agent_id, grid_dimensions, simulator):
@@ -38,6 +40,9 @@ class Agent:
         self.__current_direction = None
 
         Broadcaster().subscribe("/request_agent_stats", self.send_properties)
+
+    def is_human(self):
+        return self.__human_controlled
 
     def set_human_control(self, control):
         self.__human_controlled = control
@@ -133,8 +138,8 @@ class Agent:
                 self.__latest_world_model.add_obstacle(coord, cell)
             elif cell != EMPTY:
                 self.__latest_world_model.add_agent(cell, coord)
-        print("\nVisible world for agent {0} ({3}) (radius {2}): \n{1}.".format(
-            self.__agent_id, self.__latest_world_model.cells.transpose(), self.__visibility_radius, self.__current_pos))
+        # print("\nVisible world for agent {0} ({3}) (radius {2}): \n{1}.".format(
+        #     self.__agent_id, self.__latest_world_model.cells.transpose(), self.__visibility_radius, self.__current_pos))
         return True
 
     def update_world_knowledge(self, visible_cells, time_step, overwrite=False):
@@ -173,8 +178,8 @@ class Agent:
                 self.set_direction(self.__current_direction)
             if overwrite or (len(self.__previous_plans) <= 1 or time_step not in self.__previous_plans):
                 self.__previous_plans[time_step] = copy.deepcopy(self.__plan)
-        print("Path from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.__plan))
-        print("Turns from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.next_waypoints()))
+        # print("Path from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.__plan))
+        # print("Turns from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.next_waypoints()))
 
     def find_path_BFS(self, origin, goal, ignore_agents=True):
         """
@@ -530,6 +535,16 @@ class Agent:
                 for arg in gen:
                     acceptable_arguments.append(arg)
                     print("Plausible argument from {}: {}".format(their_argument_id, arg))
+
+                if self.is_human() and EXPLAINABLE:
+                    interactive_argument = InteractiveArgument()
+                    interactive_argument.proposed_argument = argument_text
+                    interactive_argument.sender_id = sender_id
+                    for argument in acceptable_arguments:
+                        interactive_argument.possible_answers[argument.id()] = argument.descriptive_text()
+                    if len(acceptable_arguments) == 0:
+                        interactive_argument.possible_answers[-1] = "I shall give way, then."
+                    Broadcaster().publish("/new_argument", interactive_argument)
 
                 if len(acceptable_arguments) > 0:
                     # Rebuttal.

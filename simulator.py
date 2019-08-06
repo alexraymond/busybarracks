@@ -12,6 +12,7 @@ from argument import *
 
 COMMUNICATION = True
 
+
 #FIXME: Agents need to be able to re-inform their new paths after rerouting.
 
 class Simulator:
@@ -187,13 +188,16 @@ class Simulator:
         num_cells = self.__width * self.__height
         return num_cells - len(self.__obstacles) - len(self.__agents)
 
+    def communicate(self):
+        if COMMUNICATION:
+            for agent in self.__agents.values():
+                if agent.is_human() is False:
+                    agent.communicate()
+
     def simulate_step(self):
         t = self.__current_time_step
         Broadcaster().publish("/log/raw", "\n*** END OF STEP {} ***\n".format(t))
         self.__world_model.lock_for_edits()
-        if COMMUNICATION:
-            for agent in self.__agents.values():
-                agent.communicate()
         moves = {}
         still_agents = 0
         for agent in self.__agents.values():

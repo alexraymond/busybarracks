@@ -157,27 +157,34 @@ class PathUI(QGraphicsRectItem):
         dest_x, dest_y = self.relative(self.path[-1][POS])
 
         # Drawing box around destination cell.
-        south = QLineF(dest_x - CELL_SIZE/2, dest_y + CELL_SIZE/2,
-                       dest_x + CELL_SIZE/2, dest_y + CELL_SIZE/2)
-        north = QLineF(dest_x - CELL_SIZE/2, dest_y - CELL_SIZE/2,
-                       dest_x + CELL_SIZE/2, dest_y - CELL_SIZE/2)
-        west = QLineF(dest_x - CELL_SIZE/2, dest_y - CELL_SIZE/2,
-                      dest_x - CELL_SIZE/2, dest_y + CELL_SIZE/2)
-        east = QLineF(dest_x + CELL_SIZE/2, dest_y - CELL_SIZE/2,
-                      dest_x + CELL_SIZE/2, dest_y + CELL_SIZE/2)
-        self.lines.append(QGraphicsLineItem(south, self))
-        self.lines.append(QGraphicsLineItem(north, self))
-        self.lines.append(QGraphicsLineItem(west, self))
-        self.lines.append(QGraphicsLineItem(east, self))
+        box = QGraphicsRectItem(dest_x - CELL_SIZE/2, dest_y - CELL_SIZE/2, CELL_SIZE, CELL_SIZE, self)
+        # south = QLineF(dest_x - CELL_SIZE/2, dest_y + CELL_SIZE/2,
+        #                dest_x + CELL_SIZE/2, dest_y + CELL_SIZE/2)
+        # north = QLineF(dest_x - CELL_SIZE/2, dest_y - CELL_SIZE/2,
+        #                dest_x + CELL_SIZE/2, dest_y - CELL_SIZE/2)
+        # west = QLineF(dest_x - CELL_SIZE/2, dest_y - CELL_SIZE/2,
+        #               dest_x - CELL_SIZE/2, dest_y + CELL_SIZE/2)
+        # east = QLineF(dest_x + CELL_SIZE/2, dest_y - CELL_SIZE/2,
+        #               dest_x + CELL_SIZE/2, dest_y + CELL_SIZE/2)
+        # self.lines.append(QGraphicsLineItem(south, self))
+        # self.lines.append(QGraphicsLineItem(north, self))
+        # self.lines.append(QGraphicsLineItem(west, self))
+        # self.lines.append(QGraphicsLineItem(east, self))
 
         # Sets pen to all lines.
         for line in self.lines:
             if self.agent_id == 1:  # Human agent
-                pen = QPen(QColor(161, 32, 32))  # Red
+                red = QColor(161, 32, 32)
+                pen = QPen(red)  # Red
+                brush = QBrush(red)
             else:
-                pen = QPen(QColor(59, 102, 43))  # Green
+                green = QColor(59, 102, 43)
+                pen = QPen(green)  # Green
+                brush = QBrush(green)
             pen.setWidth(5)
             line.setPen(pen)
+            box.setBrush(brush)
+
 
 
 class GridUI(QGraphicsView):

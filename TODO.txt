@@ -1,0 +1,3 @@
+# Retransmit paths when agents reroute
+# Reroute_avoiding at every step?
+# Punish agent for collisions
