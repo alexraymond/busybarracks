@@ -3,6 +3,8 @@ import copy
 
 import grid2d
 from grid2d import Grid2D, GLOBAL_OBSTACLE
+from edict import Broadcaster
+from utils import *
 
 
 class Grid3D:
@@ -169,22 +171,37 @@ class Grid3D:
         next_time_step = self.__latest_time_step + 1
         crashing_agents = []
         out_of_bounds = []
-        conflicts = []
+        conflicts = set()
         coords = list(moves.values())
         if len(self.__steps) - 1 < next_time_step:
             self.__steps.append(copy.deepcopy(self.__steps[self.__latest_time_step]))
         else:
             self.__steps[next_time_step] = copy.deepcopy(self.__steps[self.__latest_time_step])
-        for agent, coord in moves.items():
+        for agent_id, coord in moves.items():
             grid = self.raw_grid_at(next_time_step)
             if not self.within_bounds(coord):
-                out_of_bounds.append(agent)
+                out_of_bounds.append(agent_id)
                 continue
             x, y = coord
             if Grid2D.is_obstacle(grid[x][y]):
-                crashing_agents.append(agent)
+                crashing_agents.append(agent_id)
             if coords.count(coord) > 1:
-                conflicts.append(agent)
+                conflicts.add(agent_id)
+            if next_time_step > 2: #  No point checking for illegal swaps at beginning.
+                for other_agent_id, their_coord in moves.items():
+                    if agent_id == other_agent_id:
+                        continue
+                    current_step = next_time_step - 1
+                    # Formatting position to ((x,y), t)
+                    previous_pos = (self.__agent_positions[agent_id][current_step], current_step)
+                    their_previous_pos = (self.__agent_positions[other_agent_id][current_step], current_step)
+                    path_a = [previous_pos, (coord, next_time_step)]
+                    path_b = [their_previous_pos, (their_coord, next_time_step)]
+                    if illegal_position_swap(path_a, path_b, 2):
+                        conflicts.add(agent_id)
+                        conflicts.add(other_agent_id)
+
+
         if len(crashing_agents) > 0:
             print("Grid3D::attempt_move: Agent(s) {0} will collide with obstacles.".format(crashing_agents))
             return False
@@ -193,15 +210,17 @@ class Grid3D:
             return False
         if len(conflicts) > 0:
             print("Grid3D::attempt_move: Conflicts found between agents {0}.".format(conflicts))
+            if 1 in conflicts:
+                Broadcaster().publish("/human_collision")
             return False
 
         ######################################################################
         # Checks done. Moves are feasible, now move agents on next time step.#
         ######################################################################
 
-        for agent, coord in moves.items():
-            self.__steps[next_time_step].move_agent(agent, coord)
-            self.__agent_positions[agent][next_time_step] = coord
+        for agent_id, coord in moves.items():
+            self.__steps[next_time_step].move_agent(agent_id, coord)
+            self.__agent_positions[agent_id][next_time_step] = coord
         self.__latest_time_step = next_time_step
         return True
 

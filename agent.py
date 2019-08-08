@@ -38,11 +38,16 @@ class Agent:
         self.score = 100
         self.__human_controlled = False
         self.__current_direction = None
+        self.__human_reply = None
 
         Broadcaster().subscribe("/request_agent_stats", self.send_properties)
 
+
     def is_human(self):
         return self.__human_controlled
+
+    def is_AI(self):
+        return not self.__human_controlled
 
     def set_human_control(self, control):
         self.__human_controlled = control
@@ -51,6 +56,14 @@ class Agent:
                 self.__plan = [(self.__current_pos, self.__current_time_step)]
             Broadcaster().subscribe("/direction_chosen", self.set_direction)
             Broadcaster().subscribe("/new_time_step", self.change_score)
+            Broadcaster().subscribe("/human_collision", self.score_collision)
+            Broadcaster().subscribe("/human_reply", self.set_human_reply)
+
+    def set_human_reply(self, reply):
+        self.__human_reply = reply
+
+    def score_collision(self):
+        self.change_score(-20)
 
     def change_score(self, delta = -1):
         self.score += delta
@@ -84,11 +97,11 @@ class Agent:
     def send_properties(self, agent_id):
         if self.__agent_id != agent_id:
             return
-        text = "id: " + str(agent_id) + "\n"
+        text = ""
         for property in self.culture_properties():
             value = self.__dict__.get(property, None)
             text += str(property) + ": " + str(value) + "\n"
-        Broadcaster().publish("/property_label/raw", text)
+        Broadcaster().publish("/property_label/raw", agent_id, text)
 
     def set_culture(self, culture):
         self.__culture = culture
@@ -549,22 +562,33 @@ class Agent:
                 if len(acceptable_arguments) > 0:
                     # Rebuttal.
                     # TODO: Remove randomness. Should pick best argument.
-                    chosen_arg = np.random.randint(0, len(acceptable_arguments))
+                    if self.is_human():
+                        chosen_arg_id = self.__human_reply
+                    else:
+                        index = np.random.randint(0, len(acceptable_arguments))
+                        chosen_arg_id = acceptable_arguments[index].id()
                     print("Acceptable arguments: {}".format(acceptable_arguments))
-                    print("Chosen argument: {}".format(chosen_arg))
-                    chosen_arg_id = acceptable_arguments[chosen_arg].id()
+                    print("Chosen argument: {}".format(chosen_arg_id))
+                    # chosen_arg_id = acceptable_arguments[chosen_arg].id()
                     locution = Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=chosen_arg_id)
                     self.__simulator.send_locution(self.__agent_id, sender_id, locution)
                 else:
                     # Concede defeat.
                     self.__conceding_to_agents.add(sender_id)
-                    log = "{1} was convinced by {0}.".format(sender_id, self.__agent_id)
+                    log = "{0} convinced {1}.".format(sender_id, self.__agent_id)
                     Broadcaster().publish("/log/raw", log)
+                    if self.is_AI() and EXPLAINABLE and sender_id == HUMAN:
+                        interactive_argument = InteractiveArgument()
+                        interactive_argument.proposed_argument = "Ok, I will move out of your way."
+                        interactive_argument.sender_id = self.__agent_id
+                        interactive_argument.possible_answers[0] = "Thank you."
+                        Broadcaster().publish("/new_argument", interactive_argument)
                     # Check if it knows the winner's intentions.
                     if sender_id not in self.__agents_estimated_plans:
                         locution = Locution(ActType.ASK, ContentType.WAYPOINTS)
                         self.__simulator.send_locution(self.__agent_id, sender_id, locution)
                     self.reroute_avoiding()
+                    self.__negotiated_with = self.__conceding_to_agents
                     log = "{0} rerouted to {1}".format(self.__agent_id, self.__plan)
                     Broadcaster().publish("/log/raw", log)
 

@@ -24,19 +24,19 @@ class MediumCulture(Culture):
         motion.set_generator(lambda gen: True)  # Propositional arguments are always valid.
         args.append(motion)
 
-        arg1 = Argument(1, "But my rank is higher than yours.")
+        arg1 = Argument(1, "My rank is higher than yours.")
         def arg1_generator(my: Agent, their: Agent):
             return my.rank > their.rank
         arg1.set_generator(arg1_generator)
         args.append(arg1)
 
-        arg2 = Argument(2, "But I am currently performing a task and you are not.")
+        arg2 = Argument(2, "I am currently performing a task and you are not.")
         def arg2_generator(my: Agent, their: Agent):
             return my.tasked_status is True and their.tasked_status is False
         arg2.set_generator(arg2_generator)
         args.append(arg2)
 
-        arg3 = Argument(3, "But I have been tasked by someone with a higher rank.")
+        arg3 = Argument(3, "I have been tasked by someone with a higher rank.")
         def arg3_generator(my: Agent, their: Agent):
             return my.task_importance > their.rank and my.task_importance > their.task_importance
         arg3.set_generator(arg3_generator)
@@ -48,7 +48,7 @@ class MediumCulture(Culture):
         rank = np.random.randint(1, 7)
         agent.assign_property_value("rank", rank)
 
-        tasked_status = True if np.random.randint(0, 2) == 0 else False
+        tasked_status = True if np.random.randint(0, 5) != 0 else False
         agent.assign_property_value("tasked_status", tasked_status)
 
         task_importance = np.random.randint(rank, 7)
