@@ -158,8 +158,8 @@ class SimulatorUI(QMainWindow):
         # Creating argument widget #
         ############################
 
-        self.arg_widget = QDialog()
-        self.arg_widget.hide()
+        # self.arg_widget = QDialog()
+        # self.arg_widget.hide()
 
 
         #######################
@@ -168,7 +168,14 @@ class SimulatorUI(QMainWindow):
 
         Broadcaster().subscribe("/cell_pressed", self.cell_pressed)
         Broadcaster().subscribe("/new_argument", self.show_argument)
+        Broadcaster().subscribe("/human_collision", self.show_collision_dialogue)
         # Broadcaster().subscribe("/model_updated", self.update_agents)
+
+    def show_collision_dialogue(self):
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Collision!")
+        msg_box.setText("You have collided with another officer and it was <b>your fault</b>.\nLose 20 " + u"\U0001F4B0" + ".")
+        msg_box.exec_()
 
     def show_argument2(self, interactive_argument: InteractiveArgument):
         print("Showing message box!")
@@ -184,14 +191,23 @@ class SimulatorUI(QMainWindow):
         msg_box.exec_()
 
     def show_argument(self, interactive_argument: InteractiveArgument):
-        # arg_widget = QWidget()
-        self.arg_widget.setWindowTitle("Agent {} says to you:".format(interactive_argument.sender_id))
-        main_arg_label = QLabel(self.arg_widget)
+        arg_widget = QDialog()
+        arg_widget.setWindowTitle("Agent {} says to you:".format(interactive_argument.sender_id))
+        main_arg_label = QLabel(arg_widget)
         main_arg_label.setText("<i>\"" + interactive_argument.proposed_argument + "\"</i>")
         buttons = {}
+        button_group = QButtonGroup(self)
+        def button_pressed(button):
+            arg_id = buttons[button]
+            arg_widget.done(arg_id)
+
+
         for key, argument in interactive_argument.possible_answers.items():
-            button = QPushButton(argument, self.arg_widget)
+            button = QPushButton(argument, arg_widget)
+            button_group.addButton(button)
             buttons[button] = key  # Inverse dict to find key when pressing button.
+            button_group.buttonClicked.connect(button_pressed)
+
 
         v_layout = QVBoxLayout(self)
         v_layout.addWidget(main_arg_label)
@@ -201,9 +217,12 @@ class SimulatorUI(QMainWindow):
             v_layout.addWidget(button)
 
         # self.setWindowModality(QWidget.Modal)
-        self.arg_widget.setLayout(v_layout)
-        self.arg_widget.setMinimumSize(300, 200)
-        self.arg_widget.exec_()
+        arg_widget.setLayout(v_layout)
+        arg_widget.setMinimumSize(300, 200)
+        arg_widget.setWindowFlags(Qt.Window | Qt.WindowTitleHint | Qt.CustomizeWindowHint)
+        chosen_argument = arg_widget.exec_()
+        Broadcaster().publish("/human_reply", chosen_argument)
+
 
 
     def rewind_simulation(self):

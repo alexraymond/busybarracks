@@ -2,7 +2,7 @@ from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 from edict import Broadcaster
-from utils import MoveDirection
+from utils import *
 
 
 class ButtonClusterUI(QWidget):
@@ -89,9 +89,13 @@ class SidePanelUI(QWidget):
         self.score_label.setFont(QFont("Helvetica", 24))
         v_layout.addWidget(self.score_label)
 
-        self.logger_text_edit = QTextEdit(self)
-        self.logger_text_edit.setReadOnly(True)
-        v_layout.addWidget(self.logger_text_edit)
+        # self.logger_text_edit = QTextEdit(self)
+        # self.logger_text_edit.setReadOnly(True)
+        # v_layout.addWidget(self.logger_text_edit)
+
+        self.human_property_label = QLabel(self)
+        self.human_property_label.setFont(QFont("Helvetica", 16))
+        v_layout.addWidget(self.human_property_label)
 
         self.property_label = QLabel(self)
         self.property_label.setFont(QFont("Helvetica", 16))
@@ -108,16 +112,21 @@ class SidePanelUI(QWidget):
         # Edict subscriptions #
         #######################
 
-        Broadcaster().subscribe("/log/raw", self.append_to_log)
+        # Broadcaster().subscribe("/log/raw", self.append_to_log)
         Broadcaster().subscribe("/property_label/raw", self.set_property_label)
         Broadcaster().subscribe("/score_changed", self.set_score)
 
     def append_to_log(self, text):
-        self.logger_text_edit.append(text)
+        # self.logger_text_edit.append(text)
+        pass
 
-    def set_property_label(self, text):
+    def set_property_label(self, agent_id, text):
         print("Setting property label")
-        self.property_label.setText(text)
+        if agent_id == HUMAN:
+            self.human_property_label.setText("You:\n" + text)
+            self.human_property_label.setFont(QFont("Helvetica", 16, 10))
+        else:
+            self.property_label.setText("Agent {}:\n".format(agent_id) + text)
 
     def set_score(self, score):
         self.score_label.setText("Score: " + str(score) + u"\U0001F4B0")

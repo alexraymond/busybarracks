@@ -1,6 +1,7 @@
 from enum import Enum
 POS = 0
 TIME_STEP = 1
+HUMAN = 1
 
 class MoveDirection(Enum):
     WAIT = 0

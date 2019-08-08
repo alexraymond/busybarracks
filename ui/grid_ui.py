@@ -57,7 +57,7 @@ class GridCellUI(QGraphicsRectItem):
             self.circle_item.setVisible(True)
             brush = QBrush()
             brush.setStyle(Qt.SolidPattern)
-            if self.cell_value == 1:  # Human agent
+            if self.cell_value == HUMAN:  # Human agent
                 brush.setColor(QColor(161, 32, 32))  # Red
             else:
                 brush.setColor(QColor(59, 102, 43))  # Green
@@ -173,7 +173,7 @@ class PathUI(QGraphicsRectItem):
 
         # Sets pen to all lines.
         for line in self.lines:
-            if self.agent_id == 1:  # Human agent
+            if self.agent_id == HUMAN:  # Human agent
                 red = QColor(161, 32, 32)
                 pen = QPen(red)  # Red
                 brush = QBrush(red)
