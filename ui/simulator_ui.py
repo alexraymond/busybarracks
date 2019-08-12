@@ -126,7 +126,6 @@ class SimulatorUI(QMainWindow):
         self.side_dock_widget.setFeatures(QDockWidget.DockWidgetMovable)
         self.addDockWidget(Qt.RightDockWidgetArea, self.side_dock_widget)
         self.side_panel.button_cluster.button_group.buttonClicked.connect(self.update_agents)
-        self.side_panel.button_cluster.go_button.clicked.connect(self.advance_simulation)
 
         # TODO: Re-add progress widget later
         # bottom_dock_widget = QDockWidget("Simulation Progress", self)
@@ -169,6 +168,7 @@ class SimulatorUI(QMainWindow):
         Broadcaster().subscribe("/cell_pressed", self.cell_pressed)
         Broadcaster().subscribe("/new_argument", self.show_argument)
         Broadcaster().subscribe("/human_collision", self.show_collision_dialogue)
+        Broadcaster().subscribe("/advance_simulation", self.advance_simulation)
         # Broadcaster().subscribe("/model_updated", self.update_agents)
 
     def show_collision_dialogue(self):
@@ -367,7 +367,6 @@ class SimulatorUI(QMainWindow):
             plans[agent.agent_id()] = agent.plan_at(step)
             visibilities[agent.agent_id()] = agent.visibility_radius()
             goals[agent.agent_id()] = agent.goal()
-            print("Received plan for agent {} : \n{}".format(agent.agent_id(), plans[agent.agent_id()]))
         self.grid_view.update_agent_positions(positions)
         self.grid_view.update_agent_models(world_models)
         self.grid_view.update_agent_plans(plans)

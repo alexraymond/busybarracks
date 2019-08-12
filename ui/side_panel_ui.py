@@ -35,13 +35,8 @@ class ButtonClusterUI(QWidget):
 
         self.direction_buttons.extend([self.up_button, self.down_button, self.left_button, self.right_button, self.wait_button])
         for button in self.direction_buttons:
-            button.setCheckable(True)
+            button.setCheckable(False)
             self.button_group.addButton(button)
-
-        self.go_button = QToolButton(self)
-        self.go_button.setText("Next (1" + u"\U0001F4B0" + ")")
-        self.go_button.setFont(QFont("Helvetica", 16))
-        self.go_button.setFixedSize(180, 60)
 
         self.grid_layout.setColumnMinimumWidth(0, 50)
         self.grid_layout.setColumnMinimumWidth(1, 50)
@@ -52,19 +47,17 @@ class ButtonClusterUI(QWidget):
         self.grid_layout.addWidget(self.left_button, 1, 0, Qt.AlignHCenter)
         self.grid_layout.addWidget(self.right_button, 1, 2, Qt.AlignHCenter)
         self.grid_layout.addWidget(self.wait_button, 1, 1, Qt.AlignHCenter)
-        self.grid_layout.addWidget(self.go_button, 3, 0, 3, 0, Qt.AlignHCenter)
 
         self.setLayout(self.grid_layout)
 
-        self.button_group.buttonToggled.connect(self.set_button_pressed)
+        self.button_group.buttonClicked.connect(self.set_button_pressed)
 
         self.current_direction = None
 
 
-    def set_button_pressed(self, button, checked):
-        if checked is False:
-            return
-        elif button == self.up_button:
+    def set_button_pressed(self, button):
+        print("Button clicked!")
+        if button == self.up_button:
             self.current_direction = MoveDirection.UP
         elif button == self.down_button:
             self.current_direction = MoveDirection.DOWN
@@ -77,6 +70,7 @@ class ButtonClusterUI(QWidget):
         else:
             self.current_direction = None
         Broadcaster().publish("/direction_chosen", self.current_direction)
+        Broadcaster().publish("/advance_simulation")
 
 
 class SidePanelUI(QWidget):

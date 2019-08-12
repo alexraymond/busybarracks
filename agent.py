@@ -562,7 +562,7 @@ class Agent:
                 if len(acceptable_arguments) > 0:
                     # Rebuttal.
                     # TODO: Remove randomness. Should pick best argument.
-                    if self.is_human():
+                    if self.is_human() and EXPLAINABLE:
                         chosen_arg_id = self.__human_reply
                     else:
                         index = np.random.randint(0, len(acceptable_arguments))
