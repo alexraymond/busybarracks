@@ -192,7 +192,8 @@ class Agent:
         if self.__current_pos != self.__goal:
             self.__plan = self.find_path_3D_search((self.__current_pos, self.__current_time_step), self.__goal)
             if self.__human_controlled:
-                self.set_direction(self.__current_direction)
+                pass
+                # self.set_direction(self.__current_direction)
             if overwrite or (len(self.__previous_plans) <= 1 or time_step not in self.__previous_plans):
                 self.__previous_plans[time_step] = copy.deepcopy(self.__plan)
         # print("Path from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.__plan))

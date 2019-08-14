@@ -214,7 +214,7 @@ class GridUI(QGraphicsView):
             for j in range(y_cells):
                 cell = GridCellUI(EMPTY, i, j, self)
                 # cell.agent_hover_enter.connect(self.load_agent_grid)
-                cell.set_hover_enter_callback(self.load_agent_grid)
+                cell.set_hover_enter_callback(self.show_goal)
                 cell.set_hover_leave_callback(self.draw_base_grid)
                 self.cells[i][j] = cell
                 self.grid_scene.addItem(cell)
@@ -291,11 +291,14 @@ class GridUI(QGraphicsView):
         self.refresh_paths()
         self.draw_grid(self.base_grid)
 
+    def show_goal(self, agent_id):
+        if self.agent_plans.get(agent_id, None) is not None:
+            self.draw_path(agent_id)
+
     def load_agent_grid(self, agent_id):
         self.draw_grid(self.agent_world_models[agent_id])
         self.draw_visibility(agent_id)
-        if self.agent_plans.get(agent_id, None) is not None:
-            self.draw_path(agent_id)
+        self.show_goal(agent_id)
 
     def clear_selection(self):
         if self.current_selection is not None:

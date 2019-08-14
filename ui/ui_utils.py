@@ -2,6 +2,7 @@ from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from PySide2.QtGui import *
 
+MEDIUM_FONT = QFont("Helvetica", 12)
 LARGE_FONT = QFont("Helvetica", 16)
 HUGE_FONT = QFont("Helvetica", 24)
 

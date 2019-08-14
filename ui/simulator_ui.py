@@ -208,6 +208,7 @@ class SimulatorUI(QMainWindow):
 
         for key, argument in interactive_argument.possible_answers.items():
             button = QPushButton(argument, arg_widget)
+            button.setFont(LARGE_FONT)
             button_group.addButton(button)
             buttons[button] = key  # Inverse dict to find key when pressing button.
             button_group.buttonClicked.connect(button_pressed)
