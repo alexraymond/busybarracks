@@ -1,4 +1,5 @@
 import numpy as np
+from pydoc import locate
 from grid3d import Grid3D
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE
 from agent import Agent
@@ -24,12 +25,14 @@ class Simulator:
         self.__height = h
         self.__current_time_step = 0
 
-        self.__culture = MediumCulture()
+        self.__culture = None
 
         if filename:
             self.load_grid(filename)
+            self.load_culture(filename)
 
         Broadcaster().subscribe("/log/raw", self.print_log)
+
 
     def print_log(self, log):
         print(log)
@@ -147,8 +150,8 @@ class Simulator:
             success = self.__world_model.add_agent(id, coord)
             if success:
                 self.__agents[id] = Agent(id, (self.__width, self.__height), self)
-                self.__agents[id].set_culture(self.__culture)
-                self.__culture.initialise_random_values(self.__agents[id])
+                # self.__agents[id].set_culture(self.__culture)
+                # self.__culture.initialise_random_values(self.__agents[id])
 
     def add_agent(self, coord, agent_id=None):
         if agent_id is None:
@@ -160,8 +163,7 @@ class Simulator:
         success = self.__world_model.add_agent(agent_id, coord)
         if success:
             self.__agents[agent_id] = Agent(agent_id, (self.__width, self.__height), self)
-            self.__agents[agent_id].set_culture(self.__culture)
-            self.__culture.initialise_random_values(self.__agents[agent_id])
+            # self.__culture.initialise_random_values(self.__agents[agent_id])
             if agent_id == HUMAN:  # By convention, agent 1 is always going to be the human player.
                 self.__agents[agent_id].set_human_control(True)
 
@@ -236,11 +238,11 @@ class Simulator:
         print("Loading grid!")
         file = open(filename, "r")
         grid = self.__world_model.grid_at(0)
-        file.readline() # Skip dimensions line.
+        file.readline()  # Skip dimensions line.
         for i in range(grid.width):
             values = file.readline().split()
             if len(values) != grid.height:
-                print("Grid3D::load_grid: Ill-formed file! Grid might be corrupted.")
+                print("Simulator::load_grid: Ill-formed file! Grid might be corrupted.")
                 return
             for j in range(len(values)):
                 cell_value = int(values[j])
@@ -253,11 +255,52 @@ class Simulator:
         goals = file.readline().split()[0]
         if goals == "GOALS":
             goal = file.readline()
-            while goal.split()[0] != "END":
+            while goal.split()[0] != "CULTURE":
                 agent_id, goal_x, goal_y = goal.split()
                 self.assign_goal(int(agent_id), (int(goal_x), int(goal_y)))
                 goal = file.readline()
         file.close()
+
+    def load_culture(self, filename):
+        print("Loading culture!")
+        file = open(filename, "r")
+        line = file.readline()
+        while line:
+            if line.split()[0] == "CULTURE":
+                culture = file.readline().split()[0]
+                if culture == 'E':
+                    self.__culture = EasyCulture()
+                elif culture == 'M':
+                    self.__culture = MediumCulture()
+                else:
+                    print("Simulator::load_culture: No culture chosen!")
+                    return
+                for agent in self.__agents.values():
+                    agent.set_culture(self.__culture)
+            elif line.split()[0] == "MODE":
+                mode = file.readline().split()[0]
+                if mode == 'X':
+                    Agent.EXPLAINABLE = True
+                elif mode == 'N':
+                    Agent.EXPLAINABLE = False
+                else:
+                    print("Simulator::load_culture: No mode defined!")
+                    return
+            elif line.split()[0] == "PROPERTIES":
+                property_tuple = file.readline().split()
+                while property_tuple[0] != "END":
+                    if len(property_tuple) != 4:
+                        print("Simulator::load_culture: Broken property tuple!")
+                    agent_id = int(property_tuple[0])
+                    property = property_tuple[1]
+                    var_type = locate(property_tuple[2])
+                    value = var_type(property_tuple[3])
+                    self.__agents[agent_id].assign_property_value(property, value)
+                    property_tuple = file.readline().split()
+
+            line = file.readline()
+
+
 
 
     def save_grid(self, filename):

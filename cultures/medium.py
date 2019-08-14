@@ -13,7 +13,6 @@ class MediumCulture(Culture):
                            "tasked_status": False,
                            "task_importance": 0}
 
-        np.random.seed(2)
 
     def create_arguments(self):
         """

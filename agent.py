@@ -8,9 +8,11 @@ from utils import *
 from interactive_argument import InteractiveArgument
 from locution import *
 
-EXPLAINABLE = True
+
 
 class Agent:
+    EXPLAINABLE = True
+
     def __init__(self, agent_id, grid_dimensions, simulator):
         self.__goal = None
         self.__plan = []
@@ -223,7 +225,7 @@ class Agent:
 
             for neighbour in self.__latest_world_model.neighbours_of(current, 'von_neumann'):
                 x, y = neighbour
-                cell_condition = self.__latest_world_model.cells[x][y] >= 0 if ignore_agents\
+                cell_condition = self.__latest_world_model.cells[x][y] >= 0 if ignore_agents \
                     else self.__latest_world_model.cells[x][y] == EMPTY
                 if neighbour not in came_from and cell_condition:
                     to_visit.append(neighbour)
@@ -567,7 +569,7 @@ class Agent:
                     acceptable_arguments.append(arg)
                     print("Plausible argument from {}: {}".format(their_argument_id, arg))
 
-                if self.is_human() and EXPLAINABLE:
+                if self.is_human() and Agent.EXPLAINABLE:
                     interactive_argument = InteractiveArgument()
                     interactive_argument.proposed_argument = argument_text
                     interactive_argument.sender_id = sender_id
@@ -580,7 +582,7 @@ class Agent:
                 if len(acceptable_arguments) > 0:
                     # Rebuttal.
                     # TODO: Remove randomness. Should pick best argument.
-                    if self.is_human() and EXPLAINABLE:
+                    if self.is_human() and Agent.EXPLAINABLE:
                         chosen_arg_id = self.__human_reply
                     else:
                         index = np.random.randint(0, len(acceptable_arguments))
@@ -595,7 +597,7 @@ class Agent:
                     self.__conceding_to_agents.add(sender_id)
                     log = "{0} convinced {1}.".format(sender_id, self.__agent_id)
                     Broadcaster().publish("/log/raw", log)
-                    if self.is_AI() and EXPLAINABLE and sender_id == HUMAN:
+                    if self.is_AI() and Agent.EXPLAINABLE and sender_id == HUMAN:
                         interactive_argument = InteractiveArgument()
                         interactive_argument.proposed_argument = "Ok, I will move out of your way."
                         interactive_argument.sender_id = self.__agent_id
