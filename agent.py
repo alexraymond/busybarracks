@@ -75,13 +75,13 @@ class Agent:
         if self.__current_pos is not None:
             self.__plan[0] = (self.__current_pos, self.__current_time_step)
         x, y = self.__current_pos
-        if direction == MoveDirection.UP:
+        if direction == MoveDirection.UP and y > 0:
             self.__plan[1] = ((x, y - 1), self.__current_time_step+1)
-        elif direction == MoveDirection.DOWN:
+        elif direction == MoveDirection.DOWN and y < self.__grid_height :
             self.__plan[1] = ((x, y + 1), self.__current_time_step+1)
-        elif direction == MoveDirection.LEFT:
+        elif direction == MoveDirection.LEFT and x > 0:
             self.__plan[1] = ((x - 1, y), self.__current_time_step+1)
-        elif direction == MoveDirection.RIGHT:
+        elif direction == MoveDirection.RIGHT and x < self.__grid_width:
             self.__plan[1] = ((x + 1, y), self.__current_time_step+1)
         else:
             self.__plan[1] = ((x, y), self.__current_time_step+1)
@@ -312,7 +312,7 @@ class Agent:
             path = list()
             path.append(current)
             current = came_from[current]
-            while current != origin:
+            while current != origin and current is not None:
                 path.append(current)
                 current = came_from[current]
             path.append(origin)
@@ -387,7 +387,8 @@ class Agent:
                 continue
             # Check if we already know their destination.
             # TODO: This is only a partial destination. Need to ask again after a while.
-            if other_agent_id not in self.__other_agents_waypoints:
+            # if other_agent_id not in self.__other_agents_waypoints:
+            if other_agent_id not in self.__negotiated_with:
                 # Ask for their objective.
                 locution = Locution(ActType.ASK, ContentType.WAYPOINTS)
                 self.__simulator.send_locution(self.__agent_id, other_agent_id, locution)
@@ -506,8 +507,11 @@ class Agent:
                         # Start argumentation. Ask your opponent to change paths.
                         self.__negotiated_with.add(sender_id)
                         self.__current_conflict = conflict
-                        locution = Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=0, conflict=conflict)  # TODO: Add enum to argument_id
-                        self.__simulator.send_locution(self.__agent_id, sender_id, locution)
+                        if sender_id not in self.__conceding_to_agents:
+                            locution = Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=0, conflict=conflict)  # TODO: Add enum to argument_id
+                            self.__simulator.send_locution(self.__agent_id, sender_id, locution)
+                        else:
+                            self.reroute_avoiding()
 
 
                 # TODO: Do something smart with the sender's waypoint.

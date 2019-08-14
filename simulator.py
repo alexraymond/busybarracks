@@ -29,6 +29,11 @@ class Simulator:
         if filename:
             self.load_grid(filename)
 
+        Broadcaster().subscribe("/log/raw", self.print_log)
+
+    def print_log(self, log):
+        print(log)
+
     def agent(self, agent_id):
         return self.__agents.get(agent_id, None)
 

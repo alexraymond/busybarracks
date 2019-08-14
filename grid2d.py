@@ -42,7 +42,7 @@ class Grid2D:
         """
         if not self.within_bounds(coord):
             print("Grid2D::neighbours_of: Position out of bounds.")
-            return False
+            return None
         x, y = coord
         neighbours = []
         if neighbourhood_type == 'von_neumann':
@@ -57,7 +57,7 @@ class Grid2D:
                     if self.within_bounds((x + i, y + j)): neighbours.append((x + i, y + j))
         else:
             print("Grid2D::neighbours_of: This neighbourhood type is not supported.")
-            return False
+            return None
         return neighbours
 
     def is_cell_empty(self, coord):
