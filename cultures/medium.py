@@ -13,6 +13,8 @@ class MediumCulture(Culture):
                            "tasked_status": False,
                            "task_importance": 0}
 
+        np.random.seed(2)
+
     def create_arguments(self):
         """
         Defines set of arguments present in the culture.
@@ -75,6 +77,7 @@ class MediumCulture(Culture):
         self.argumentation_framework.add_attack(arg2_id, arg1_id)
         self.argumentation_framework.add_attack(arg2_id, arg3_id)
         self.argumentation_framework.add_attack(arg3_id, arg1_id)
+        self.argumentation_framework.add_attack(arg3_id, motion_id)
 
 
 

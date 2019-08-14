@@ -3,6 +3,7 @@ from PySide2.QtCore import *
 from PySide2.QtGui import *
 from edict import Broadcaster
 from utils import *
+from ui.ui_utils import *
 
 
 class ButtonClusterUI(QWidget):
@@ -80,7 +81,7 @@ class SidePanelUI(QWidget):
         v_layout = QVBoxLayout(self)
 
         self.score_label = QLabel(self)
-        self.score_label.setFont(QFont("Helvetica", 24))
+        self.score_label.setFont(HUGE_FONT)
         v_layout.addWidget(self.score_label)
 
         # self.logger_text_edit = QTextEdit(self)
@@ -88,11 +89,11 @@ class SidePanelUI(QWidget):
         # v_layout.addWidget(self.logger_text_edit)
 
         self.human_property_label = QLabel(self)
-        self.human_property_label.setFont(QFont("Helvetica", 16))
+        self.human_property_label.setFont(LARGE_FONT)
         v_layout.addWidget(self.human_property_label)
 
         self.property_label = QLabel(self)
-        self.property_label.setFont(QFont("Helvetica", 16))
+        self.property_label.setFont(LARGE_FONT)
         v_layout.addWidget(self.property_label)
 
         self.button_cluster = ButtonClusterUI(self)
@@ -118,9 +119,11 @@ class SidePanelUI(QWidget):
         print("Setting property label")
         if agent_id == HUMAN:
             self.human_property_label.setText("You:\n" + text)
-            self.human_property_label.setFont(QFont("Helvetica", 16, 10))
+            self.human_property_label.setFont(LARGE_FONT)
+            self.human_property_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         else:
             self.property_label.setText("Agent {}:\n".format(agent_id) + text)
+            self.property_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
 
     def set_score(self, score):
-        self.score_label.setText("Score: " + str(score) + u"\U0001F4B0")
+        self.score_label.setText("Fuel: " + str(score) + u"\U000026FD")

@@ -7,6 +7,8 @@ from ui.grid_ui import GridUI
 from ui.side_panel_ui import SidePanelUI
 from edict import Broadcaster
 from grid2d import LOCAL_OBSTACLE
+from utils import *
+from ui.ui_utils import *
 
 
 class SimulatorUI(QMainWindow):
@@ -192,11 +194,13 @@ class SimulatorUI(QMainWindow):
 
     def show_argument(self, interactive_argument: InteractiveArgument):
         arg_widget = QDialog()
-        arg_widget.setWindowTitle("Agent {} says to you:".format(interactive_argument.sender_id))
+        other_agent_id = interactive_argument.sender_id
+        arg_widget.setWindowTitle("Agent {} says to you:".format(other_agent_id))
         main_arg_label = QLabel(arg_widget)
-        main_arg_label.setText("<i>\"" + interactive_argument.proposed_argument + "\"</i>")
+        main_arg_label.setText("Agent {}: <i>\"".format(other_agent_id) + interactive_argument.proposed_argument + "\"</i>")
+        main_arg_label.setFont(LARGE_FONT)
         buttons = {}
-        button_group = QButtonGroup(self)
+        button_group = QButtonGroup(arg_widget)
         def button_pressed(button):
             arg_id = buttons[button]
             arg_widget.done(arg_id)
@@ -208,9 +212,34 @@ class SimulatorUI(QMainWindow):
             buttons[button] = key  # Inverse dict to find key when pressing button.
             button_group.buttonClicked.connect(button_pressed)
 
+        frame = QFrame(arg_widget)
 
-        v_layout = QVBoxLayout(self)
+        h_layout = QHBoxLayout(arg_widget)
+        human_agent_stats_label = QLabel(arg_widget)
+        text = "You:\n"
+        text += self.simulator.agent(HUMAN).get_properties_as_text()
+        human_agent_stats_label.setText(text)
+        human_agent_stats_label.setFont(QFont("Helvetica", 12))
+
+        separator_label = QLabel(arg_widget)
+        separator_label.setFrameStyle(QFrame.VLine | QFrame.Plain)
+
+        frame.setFrameStyle(QFrame.Panel | QFrame.Plain)
+
+        computer_agent_stats_label = QLabel(arg_widget)
+        text = "Agent {}:\n".format(other_agent_id)
+        text += self.simulator.agent(other_agent_id).get_properties_as_text()
+        computer_agent_stats_label.setText(text)
+        computer_agent_stats_label.setFont(QFont("Helvetica", 12))
+
+        h_layout.addWidget(human_agent_stats_label)
+        h_layout.addWidget(separator_label)
+        h_layout.addWidget(computer_agent_stats_label)
+        frame.setLayout(h_layout)
+
+        v_layout = QVBoxLayout(arg_widget)
         v_layout.addWidget(main_arg_label)
+        v_layout.addWidget(frame)
         spacer = QSpacerItem(0, 25)
         # v_layout.addWidget(spacer)
         for button in buttons.keys():
@@ -326,10 +355,10 @@ class SimulatorUI(QMainWindow):
         if success:
             self.update_step(self.step_slider.value() + 1)
             self.reset_human_direction()  # TODO: Remove hideous workaround
-        else:
-            message_box = QMessageBox()
-            message_box.setText("Failed to perform move.")
-            message_box.exec_()
+        # else:
+        #     message_box = QMessageBox()
+        #     message_box.setText("Failed to perform move.")
+        #     message_box.exec_()
 
     def add_random_agent(self):
         self.simulator.create_random_agents(self.num_agents_spin_box.value())

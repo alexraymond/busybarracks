@@ -5,6 +5,7 @@ from PySide2.QtWidgets import *
 from grid2d import EMPTY, GLOBAL_OBSTACLE, LOCAL_OBSTACLE
 from edict import Broadcaster
 from utils import *
+from ui.ui_utils import *
 
 import numpy as np
 
@@ -35,7 +36,7 @@ class GridCellUI(QGraphicsRectItem):
     def set_value(self, value, special_cell=None):
         self.cell_value = value
         if special_cell == SpecialCellType.PLAYER_GOAL:
-            self.setBrush(QBrush(QColor(161, 32, 32)))
+            self.setBrush(QBrush(DARK_RED))
             self.setPen(QPen(QColor(222, 183, 120)))
             self.circle_item.setVisible(False)
         elif self.cell_value == EMPTY:
@@ -58,12 +59,13 @@ class GridCellUI(QGraphicsRectItem):
             brush = QBrush()
             brush.setStyle(Qt.SolidPattern)
             if self.cell_value == HUMAN:  # Human agent
-                brush.setColor(QColor(161, 32, 32))  # Red
+                brush.setColor(DARK_RED)  # Red
             else:
-                brush.setColor(QColor(59, 102, 43))  # Green
+                brush.setColor(OLIVE_GREEN)  # Green
             self.circle_item.setBrush(brush)
             self.text_item.setVisible(True)
             self.text_item.setText("{}".format(self.cell_value))
+            self.text_item.setFont(QFont("Helvetica", 20))
             text_width = self.text_item.boundingRect().width()
             text_height = self.text_item.boundingRect().height()
             # Centralising text inside circle
@@ -174,11 +176,11 @@ class PathUI(QGraphicsRectItem):
         # Sets pen to all lines.
         for line in self.lines:
             if self.agent_id == HUMAN:  # Human agent
-                red = QColor(161, 32, 32)
+                red = DARK_RED
                 pen = QPen(red)  # Red
                 brush = QBrush(red)
             else:
-                green = QColor(59, 102, 43)
+                green = OLIVE_GREEN
                 pen = QPen(green)  # Green
                 brush = QBrush(green)
             pen.setWidth(5)

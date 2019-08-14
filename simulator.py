@@ -219,9 +219,9 @@ class Simulator:
         if result:
             self.__current_time_step += 1
             # self.update_agents(self.__current_time_step)
-            print("Grid changed from \n{} to \n{}".format(self.grid_at(self.__current_time_step - 1).transpose(),
-                                                          self.grid_at(self.__current_time_step).transpose()))
             Broadcaster().publish("/new_time_step")
+            if self.__current_time_step == 1:
+                Broadcaster().publish("/first_move")
         return result
 
     def send_locution(self, source_id, destination_id, locution):

@@ -22,7 +22,7 @@ def straight_line_path(origin, destination):
     # Inclusive
 
     if origin[POS] == destination[POS]:
-        return origin
+        return [origin]
 
 
     x1, y1 = origin[POS]
@@ -46,11 +46,29 @@ def straight_line_path(origin, destination):
             step_counter += 1
     return path
 
-def find_conflicts_between_paths(path_a, path_b, first_n_cells):
-    i = 0
+def grow_path(path, difference):
+    last_pos = path[-1][POS]
+    last_time_step = path[-1][TIME_STEP]
+    for i in range(1, difference + 1):
+        path.append((last_pos, last_time_step + i))
+    return path
+
+def find_conflicts_between_paths(path_a, path_b, current_time_step, first_n_cells):
+    first_time_step_a = path_a[0][TIME_STEP]
+
+    last_time_step_a = path_a[-1][TIME_STEP]
+    last_time_step_b = path_b[-1][TIME_STEP]
+
+    if last_time_step_a < last_time_step_b:
+        difference = last_time_step_b - last_time_step_a
+        path_a = grow_path(path_a, difference)
+    elif last_time_step_b < last_time_step_a:
+        difference = last_time_step_a - last_time_step_b
+        path_b = grow_path(path_b, difference)
+    i = first_time_step_a
     for cell in path_a:
         i += 1
-        if i > first_n_cells:
+        if i > first_n_cells + current_time_step:
             return None
         if cell in path_b:
             return cell

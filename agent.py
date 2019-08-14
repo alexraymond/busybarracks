@@ -94,13 +94,17 @@ class Agent:
             return
         return self.__culture.__dict__.get("properties", None)
 
-    def send_properties(self, agent_id):
-        if self.__agent_id != agent_id:
-            return
+    def get_properties_as_text(self):
         text = ""
         for property in self.culture_properties():
             value = self.__dict__.get(property, None)
             text += str(property) + ": " + str(value) + "\n"
+        return text
+
+    def send_properties(self, agent_id):
+        if self.__agent_id != agent_id:
+            return
+        text = self.get_properties_as_text()
         Broadcaster().publish("/property_label/raw", agent_id, text)
 
     def set_culture(self, culture):
@@ -259,9 +263,20 @@ class Agent:
                 break
 
             if current[POS] == goal:  # Found goal!
-                goal_found = True
-                break
-
+                if concede_to_agents and len(self.__conceding_to_agents) > 0:  # Wait if not conceding.
+                    # Calculate when it's the last occurrence that they traverse your cell.
+                    last_occurrence_time_step = 0
+                    for agent in self.__conceding_to_agents:
+                        for step in self.__agents_estimated_plans[agent]:
+                            if step[POS] == current[POS]:
+                                if last_occurrence_time_step < step[TIME_STEP]:
+                                    last_occurrence_time_step = step[TIME_STEP]
+                    if current[TIME_STEP] > last_occurrence_time_step:
+                        goal_found = True
+                        break
+                else:
+                    goal_found = True
+                    break
 
             neighbours = self.__latest_world_model.neighbours_of(current[POS], 'von_neumann')
             wait_step = current[POS]
@@ -280,11 +295,9 @@ class Agent:
                             time_step = current[TIME_STEP]
                             if current[TIME_STEP] >= their_plan[-1][TIME_STEP]:
                                 time_step = their_plan[-1][TIME_STEP]
-                            a = [pos for pos in their_plan if pos[TIME_STEP] == time_step]
-                            b = a
                             their_position = [pos for pos in their_plan if pos[TIME_STEP] == time_step][0]
                             going_to_their_position = neighbouring_step == (their_position[POS], current[TIME_STEP] + 1)
-                            if neighbouring_step in self.__agents_estimated_plans[agent]:
+                            if neighbouring_step in their_plan:
                                 conflict = True
                             elif coming_to_my_position and going_to_their_position:
                                 conflict = True
@@ -414,11 +427,9 @@ class Agent:
                 path.extend(leg)
                 origin = waypoints[i]
             last_leg = self.find_path_3D_search(origin, waypoints[-1][POS], initial_time_step=time_step, concede_to_agents=False)
-            if len(waypoints) - 1 < 1:
-                path.extend(last_leg)
-            else:
-                path.extend(last_leg[1:]) # Removing first item of last leg because it already appears in previous extension.
-        return path
+            path.extend(last_leg)
+            no_duplicates = list(collections.OrderedDict.fromkeys(path))
+        return no_duplicates
 
 
 
@@ -475,10 +486,12 @@ class Agent:
                     self.__simulator.send_locution(self.__agent_id, sender_id, inform)
                 else:
                     # TODO: Handle case where we have both obstructions and path conflicts.
+                    test_path = self.estimated_path(their_position, their_next_waypoints)
                     self.__agents_estimated_plans[sender_id] = self.estimated_path(their_position, their_next_waypoints)
+
                     self.__agents_estimated_plan_lengths[sender_id] = len(self.__agents_estimated_plans[sender_id])
                     print("Estimated path of agent {}: {}".format(sender_id, self.__agents_estimated_plans[sender_id]))
-                    conflict = find_conflicts_between_paths(self.__plan, self.__agents_estimated_plans[sender_id], 4)
+                    conflict = find_conflicts_between_paths(self.__plan, self.__agents_estimated_plans[sender_id], self.__current_time_step, 4)
                     illegal_swap_time_step = illegal_position_swap(self.__plan, self.__agents_estimated_plans[sender_id], 4)
                     print("Conflict? {}".format(conflict))
                     print("Swap? {}".format(illegal_swap_time_step))
