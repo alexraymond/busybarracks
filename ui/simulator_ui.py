@@ -13,12 +13,12 @@ from ui.ui_utils import *
 
 class SimulatorUI(QMainWindow):
 
-    def __init__(self, width, height, filename=None, parent=None):
+    def __init__(self, width, height, filename=None, player_id=None, parent=None):
         super(SimulatorUI, self).__init__(parent)
 
         # TODO: Clean this mess
 
-        self.simulator = Simulator(width, height, filename)
+        self.simulator = Simulator(width, height, filename, player_id)
 
         self.setWindowTitle("Busy Barracks")
 
@@ -171,11 +171,22 @@ class SimulatorUI(QMainWindow):
         Broadcaster().subscribe("/new_argument", self.show_argument)
         Broadcaster().subscribe("/human_collision", self.show_collision_dialogue)
         Broadcaster().subscribe("/advance_simulation", self.advance_simulation)
+        Broadcaster().subscribe("/game_over", self.show_game_over)
         # Broadcaster().subscribe("/model_updated", self.update_agents)
+
+    def show_game_over(self):
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("Success!")
+        msg_box.setFont(MEDIUM_FONT)
+        msg_box.setText("Congratulations! You have reached the goal.")
+        msg_box.exec_()
+        self.simulator.save_results()
+        self.deleteLater()
 
     def show_collision_dialogue(self):
         msg_box = QMessageBox()
         msg_box.setWindowTitle("Collision!")
+        msg_box.setFont(MEDIUM_FONT)
         msg_box.setText("You have collided with another officer and it was <b>your fault</b>.\nLose 20 " + u"\U0001F4B0" + ".")
         msg_box.exec_()
 
@@ -220,7 +231,9 @@ class SimulatorUI(QMainWindow):
         text = "You:\n"
         text += self.simulator.agent(HUMAN).get_properties_as_text()
         human_agent_stats_label.setText(text)
-        human_agent_stats_label.setFont(QFont("Helvetica", 12))
+        font = QFont("Helvetica", 14)
+        font.setBold(True)
+        human_agent_stats_label.setFont(font)
 
         separator_label = QLabel(arg_widget)
         separator_label.setFrameStyle(QFrame.VLine | QFrame.Plain)
@@ -231,7 +244,7 @@ class SimulatorUI(QMainWindow):
         text = "Agent {}:\n".format(other_agent_id)
         text += self.simulator.agent(other_agent_id).get_properties_as_text()
         computer_agent_stats_label.setText(text)
-        computer_agent_stats_label.setFont(QFont("Helvetica", 12))
+        computer_agent_stats_label.setFont(QFont("Helvetica", 14))
 
         h_layout.addWidget(human_agent_stats_label)
         h_layout.addWidget(separator_label)

@@ -19,11 +19,11 @@ class Application():
             self.simulator.show()
 
         @Slot(str)
-        def load_existing_grid(filename):
+        def load_existing_grid(filename, player_id):
             file = open(filename, "r")
             dimensions = file.readline().split()
             if len(dimensions) == 2:
-                self.simulator = SimulatorUI(int(dimensions[0]), int(dimensions[1]), filename)
+                self.simulator = SimulatorUI(int(dimensions[0]), int(dimensions[1]), filename, player_id)
                 self.simulator.setMinimumSize(600, 800)
                 self.simulator.show()
             else:

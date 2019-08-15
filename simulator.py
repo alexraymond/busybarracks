@@ -1,4 +1,5 @@
 import numpy as np
+import time
 from pydoc import locate
 from grid3d import Grid3D
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE
@@ -17,13 +18,17 @@ COMMUNICATION = True
 #FIXME: Agents need to be able to re-inform their new paths after rerouting.
 
 class Simulator:
-    def __init__(self, w, h, filename):
+    def __init__(self, w, h, filename, player_id):
         self.__world_model = Grid3D(w, h)
         self.__agents = {}
         self.__obstacles = []
         self.__width = w
         self.__height = h
         self.__current_time_step = 0
+        self.__start_time = None
+        self.__num_collisions = 0
+        self.__player_id = player_id
+        self.__game_over = False
 
         self.__culture = None
 
@@ -32,7 +37,21 @@ class Simulator:
             self.load_culture(filename)
 
         Broadcaster().subscribe("/log/raw", self.print_log)
+        Broadcaster().subscribe("/human_collision", self.increment_collision_counter)
 
+    def increment_collision_counter(self):
+        self.__num_collisions += 1
+
+    def save_results(self):
+        end_time = time.time()
+        time_elapsed = end_time - self.__start_time
+        human_score = self.agent(HUMAN).score
+        file = open(str(self.__player_id) + ".txt", "w")
+        file.write("Player id: " + str(self.__player_id) + "\n")
+        file.write("Score: " + str(human_score) + "\n")
+        file.write("Collisions: " + str(self.__num_collisions) + "\n")
+        file.write("Time elapsed: " + str(time_elapsed) + "\n")
+        file.close()
 
     def print_log(self, log):
         print(log)
@@ -118,6 +137,9 @@ class Simulator:
         for agent in self.__agents.values():
             current_pos = self.__world_model.find_agent(agent.agent_id(), self.__current_time_step)
             agent.set_current_pos(current_pos)
+            if self.__game_over == False and agent.is_human() and current_pos == agent.goal():
+                Broadcaster().publish("/game_over")
+                self.__game_over = True
             vr = agent.visibility_radius()
             visible_cells = {}
             for i in range(0, self.__width):
@@ -229,6 +251,7 @@ class Simulator:
             Broadcaster().publish("/new_time_step")
             if self.__current_time_step == 1:
                 Broadcaster().publish("/first_move")
+                self.__start_time = time.time()
         return result
 
     def send_locution(self, source_id, destination_id, locution):

@@ -39,17 +39,22 @@ class NewGridSettings(QDialog):
         self.finish_button = QPushButton("Accept")
         self.finish_button.clicked.connect(self.on_finish_clicked)
 
+        self.id_label = QLabel("Player ID: ")
+        self.id_line_edit = QLineEdit(self)
+
         layout = QGridLayout(self)
-        layout.addWidget(self.new_grid_radio_button, 0, 0)
-        layout.addWidget(self.width_label, 1, 0)
-        layout.addWidget(self.width_spin_box, 1, 1)
-        layout.addWidget(self.height_label, 2, 0)
-        layout.addWidget(self.height_spin_box, 2, 1)
-        layout.addWidget(self.load_grid_radio_button, 3, 0)
-        layout.addWidget(self.file_line_edit, 4, 0)
-        layout.addWidget(self.file_load, 4, 1)
-        layout.addWidget(self.cancel_button, 5, 0)
-        layout.addWidget(self.finish_button, 5, 1)
+        layout.addWidget(self.id_label, 0, 0)
+        layout.addWidget(self.id_line_edit, 0, 1)
+        layout.addWidget(self.new_grid_radio_button, 1, 0)
+        layout.addWidget(self.width_label, 2, 0)
+        layout.addWidget(self.width_spin_box, 2, 1)
+        layout.addWidget(self.height_label, 3, 0)
+        layout.addWidget(self.height_spin_box, 3, 1)
+        layout.addWidget(self.load_grid_radio_button, 4, 0)
+        layout.addWidget(self.file_line_edit, 5, 0)
+        layout.addWidget(self.file_load, 5, 1)
+        layout.addWidget(self.cancel_button, 6, 0)
+        layout.addWidget(self.finish_button, 6, 1)
 
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
@@ -64,7 +69,7 @@ class NewGridSettings(QDialog):
         if self.button_group.checkedButton() == self.new_grid_radio_button:
             self.new_grid_requested.emit(self.width_spin_box.value(), self.height_spin_box.value())
         elif self.button_group.checkedButton() == self.load_grid_radio_button:
-            self.load_grid_requested.emit(self.file_line_edit.text())
+            self.load_grid_requested.emit(self.file_line_edit.text(), self.id_line_edit.text())
         self.close()
 
     @Slot()
@@ -89,7 +94,7 @@ class NewGridSettings(QDialog):
         self.file_line_edit.setText(filename)
 
     new_grid_requested = Signal(int, int)
-    load_grid_requested = Signal(str)
+    load_grid_requested = Signal(str, str)
     cancelled = Signal()
 
 
