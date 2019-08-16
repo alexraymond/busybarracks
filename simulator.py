@@ -30,7 +30,7 @@ class Simulator:
         self.__player_id = player_id
         self.__game_over = False
 
-        self.__culture = None
+        self.__culture = MediumCulture()
 
         if filename:
             self.load_grid(filename)
@@ -47,7 +47,14 @@ class Simulator:
         time_elapsed = end_time - self.__start_time
         human_score = self.agent(HUMAN).score
         file = open(str(self.__player_id) + ".txt", "w")
+        culture = '?'
+        if type(self.__culture) == EasyCulture:
+            culture = 'E'
+        elif type(self.__culture) == MediumCulture:
+            culture = 'M'
         file.write("Player id: " + str(self.__player_id) + "\n")
+        file.write("Culture: " + culture + "\n")
+        file.write("Mode: " + 'X\n' if Agent.EXPLAINABLE else 'N\n')
         file.write("Score: " + str(human_score) + "\n")
         file.write("Collisions: " + str(self.__num_collisions) + "\n")
         file.write("Time elapsed: " + str(time_elapsed) + "\n")
@@ -172,7 +179,7 @@ class Simulator:
             success = self.__world_model.add_agent(id, coord)
             if success:
                 self.__agents[id] = Agent(id, (self.__width, self.__height), self)
-                # self.__agents[id].set_culture(self.__culture)
+                self.__agents[id].set_culture(self.__culture)
                 self.__culture.initialise_random_values(self.__agents[id])
 
     def add_agent(self, coord, agent_id=None):

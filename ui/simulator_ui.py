@@ -187,7 +187,7 @@ class SimulatorUI(QMainWindow):
         msg_box = QMessageBox()
         msg_box.setWindowTitle("Collision!")
         msg_box.setFont(MEDIUM_FONT)
-        msg_box.setText("You have collided with another officer and it was <b>your fault</b>.\nLose 20 " + u"\U0001F4B0" + ".")
+        msg_box.setText("You have collided with another officer and it was <b>your fault</b>.\nLose 20 " + u"\U000026FD" + ".")
         msg_box.exec_()
 
     def show_argument2(self, interactive_argument: InteractiveArgument):
