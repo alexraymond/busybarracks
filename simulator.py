@@ -8,6 +8,7 @@ from utils import *
 from edict import Broadcaster
 from cultures.easy import EasyCulture
 from cultures.medium import MediumCulture
+from cultures.hard import HardCulture
 
 from argument import *
 
@@ -52,6 +53,8 @@ class Simulator:
             culture = 'E'
         elif type(self.__culture) == MediumCulture:
             culture = 'M'
+        elif type(self.__culture) == HardCulture:
+            culture = 'H'
         file.write("Player id: " + str(self.__player_id) + "\n")
         file.write("Culture: " + culture + "\n")
         file.write("Mode: " + 'X\n' if Agent.EXPLAINABLE else 'N\n')
@@ -302,6 +305,8 @@ class Simulator:
                     self.__culture = EasyCulture()
                 elif culture == 'M':
                     self.__culture = MediumCulture()
+                elif culture == 'H':
+                    self.__culture = HardCulture()
                 else:
                     print("Simulator::load_culture: No culture chosen!")
                     return
