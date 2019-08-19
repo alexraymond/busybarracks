@@ -44,6 +44,12 @@ class Agent:
 
         Broadcaster().subscribe("/request_agent_stats", self.send_properties)
 
+    def __getitem__(self, item):
+        return self.__dict__.get(item, None)
+
+    def __setitem__(self, key, value):
+        self.__dict__[key] = value
+
 
     def is_human(self):
         return self.__human_controlled
@@ -560,7 +566,6 @@ class Agent:
                     if AF.argument(argument_id).generate(self, sender):
                         rebuttals[argument_id] = AF.argument(argument_id)
                     # generate_argument(argument_id)
-                    print("Hello")
                 # Remove arguments that have already been used.
 
                 gen = (arg for arg in rebuttals.values() if arg is not None)
@@ -576,7 +581,8 @@ class Agent:
                     for argument in acceptable_arguments:
                         interactive_argument.possible_answers[argument.id()] = argument.descriptive_text()
                     if len(acceptable_arguments) == 0:
-                        interactive_argument.possible_answers[-1] = "I shall give way, then."
+                        interactive_argument.possible_answers[-1] = "I have no arguments to challenge you. I shall give way, then."
+                        interactive_argument.possible_answers[-2] = "I understand the risks, but I'll act as I please."
                     Broadcaster().publish("/new_argument", interactive_argument)
 
                 if len(acceptable_arguments) > 0:
@@ -599,7 +605,7 @@ class Agent:
                     Broadcaster().publish("/log/raw", log)
                     if self.is_AI() and Agent.EXPLAINABLE and sender_id == HUMAN:
                         interactive_argument = InteractiveArgument()
-                        interactive_argument.proposed_argument = "Ok, I will move out of your way."
+                        interactive_argument.proposed_argument = "Ok, you have a point. I will move out of your way."
                         interactive_argument.sender_id = self.__agent_id
                         interactive_argument.possible_answers[0] = "Thank you."
                         Broadcaster().publish("/new_argument", interactive_argument)

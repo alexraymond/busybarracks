@@ -31,7 +31,7 @@ class Simulator:
         self.__player_id = player_id
         self.__game_over = False
 
-        self.__culture = MediumCulture()
+        self.__culture = HardCulture()
 
         if filename:
             self.load_grid(filename)
@@ -324,18 +324,19 @@ class Simulator:
             elif line.split()[0] == "PROPERTIES":
                 property_tuple = file.readline().split()
                 while property_tuple[0] != "END":
-                    if len(property_tuple) != 3:
-                        print("Simulator::load_culture: Broken property tuple!")
+                    # Format: agent_id {property string} VALUE {value string}
                     agent_id = int(property_tuple[0])
-                    property = property_tuple[1]
-                    value = eval(property_tuple[2])
+                    separator_index = [i for i, text in enumerate(property_tuple) if text == "VALUE"][0]
+                    property = " ".join(property_tuple[1:separator_index])
+                    value_string = " ".join(property_tuple[separator_index+1:])
+                    if value_string.isdigit():
+                        value = int(value_string)
+                    else:
+                        value = value_string
                     self.__agents[agent_id].assign_property_value(property, value)
                     property_tuple = file.readline().split()
 
             line = file.readline()
-
-
-
 
     def save_grid(self, filename):
         file = open(filename, "w")
@@ -356,6 +357,8 @@ class Simulator:
             file.write("E\n")
         elif type(self.__culture) == MediumCulture:
             file.write("M\n")
+        elif type(self.__culture) == HardCulture:
+            file.write("H\n")
         file.write("MODE\n")
         if Agent.EXPLAINABLE:
             file.write("X\n")
@@ -367,7 +370,7 @@ class Simulator:
             properties = agent.culture_properties()
             for property in properties:
                 value = agent.__dict__.get(property, None)
-                file.write("{} {} {}\n".format(agent_id, property, value))
+                file.write("{} {} VALUE {}\n".format(agent_id, property, value))
         file.write("END")
         file.close()
 

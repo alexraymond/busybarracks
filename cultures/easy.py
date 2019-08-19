@@ -17,27 +17,29 @@ class EasyCulture(Culture):
         Defines set of arguments present in the culture.
         :return: Set of arguments.
         """
+        args = []
 
-        motion = Argument(0, "You must change your route.")
+        motion = Argument(0, "You must give way to me.")
         motion.set_generator(lambda gen: True)  # Propositional arguments are always valid.
+        args.append(motion)
 
-        arg1 = Argument(1, "My rank is higher than yours.")
+        arg1 = Argument(1, "You should do it instead. My rank is higher than yours.")
+
         def arg1_generator(my: Agent, their: Agent):
-            if not (hasattr(my, "rank") and hasattr(their, "rank")):
-                print("EasyCulture::arg1_generator: Attribute 'rank' not found.")
-                return False
-            return my.rank > their.rank
+            return my["Rank"] > their["Rank"]
+
         arg1.set_generator(arg1_generator)
+        args.append(arg1)
 
-        arg2 = Argument(2, "I am currently performing a task and you are not.")
+        arg2 = Argument(2, "However, I am currently performing a task and you are not.")
+
         def arg2_generator(my: Agent, their: Agent):
-            if not (hasattr(my, "tasked_status") and hasattr(their, "tasked_status")):
-                print("EasyCulture::arg2_generator: Attribute 'tasked_status' not found.")
-                return False
-            return my.tasked_status is True and their.tasked_status is False
-        arg2.set_generator(arg2_generator)
+            return my["Tasked Status"] == "Tasked" and their["Tasked Status"] == "At Ease"
 
-        self.argumentation_framework.add_arguments([motion, arg1, arg2])
+        arg2.set_generator(arg2_generator)
+        args.append(arg2)
+
+        self.argumentation_framework.add_arguments(args)
 
     def initialise_random_values(self, agent: Agent):
         rank = np.random.randint(1, 7)
