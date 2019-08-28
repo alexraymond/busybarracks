@@ -9,7 +9,7 @@ class HardCulture(Culture):
         # Properties of the culture with their default values go in self.properties.
         super().__init__()
         self.name = "Hard"
-        self.properties = {"Rank": 0,
+        self.properties = {"Military Rank": 0,
                            "Tasked Status": "At Ease",
                            "Task Importance": 0,
                            "Corporate Rank": 0,
@@ -29,9 +29,9 @@ class HardCulture(Culture):
         motion.set_generator(lambda gen: True)  # Propositional arguments are always valid.
         args.append(motion)
 
-        arg1 = Argument(1, "No, my rank is higher than yours.")
+        arg1 = Argument(1, "My military rank is higher than yours.")
         def arg1_generator(my: Agent, their: Agent):
-            return my["Rank"] > their["Rank"]
+            return my["Military Rank"] > their["Military Rank"]
         arg1.set_generator(arg1_generator)
         args.append(arg1)
 
@@ -43,33 +43,42 @@ class HardCulture(Culture):
 
         arg3 = Argument(3, "I'm afraid my task is more important than yours.")
         def arg3_generator(my: Agent, their: Agent):
-            return my["Task Importance"] > their["Rank"] and my["Task Importance"] > their["Task Importance"]
+            return my["Tasked Status"] == "Tasked" and \
+                   my["Task Importance"] > their["Military Rank"] and \
+                   my["Task Importance"] > their["Task Importance"]
         arg3.set_generator(arg3_generator)
         args.append(arg3)
         
-        arg4 = Argument(4, "Fortunately, my corporate admin rank and regular rank is\n higher than your rank and task importance.")
+        arg4 = Argument(4, "Fortunately, my combined rank is\n higher than your rank and task importance.")
         def arg4_generator(my: Agent, their: Agent):
-            my_overall_rank = my["Corporate Rank"] + my["Rank"]
-            their_overall_rank = their["Corporate Rank"] + their["Rank"]
+            my_military_rank = my["Military Rank"] if my["Tasked Status"] == "At Ease" else my["Task Importance"]
+            my_overall_rank = my["Corporate Rank"] + my_military_rank
+            their_military_rank = their["Military Rank"] if their["Tasked Status"] == "At Ease" else their["Task Importance"]
+            their_overall_rank = their["Corporate Rank"] + their_military_rank
             return my_overall_rank > their["Task Importance"] and my_overall_rank > their_overall_rank
         arg4.set_generator(arg4_generator)
         args.append(arg4)
         
         arg5 = Argument(5, "I am from the Admin department, so my corporate rank is actually\n 2 levels higher than it shows.")
         def arg5_generator(my: Agent, their: Agent):
-            my_overall_rank = my["Corporate Rank"] + 2 + my["Rank"]
-            their_overall_rank = their["Corporate Rank"] + their["Rank"]
+            my_military_rank = my["Military Rank"] if my["Tasked Status"] == "At Ease" else my["Task Importance"]
+            my_overall_rank = my["Corporate Rank"] + 2 + my_military_rank
+            their_military_rank = their["Military Rank"] if their["Tasked Status"] == "At Ease" else their[
+                "Task Importance"]
+            their_overall_rank = their["Corporate Rank"] + their_military_rank
             return my["Department"] == "Admin" and \
                    my_overall_rank > their["Task Importance"] and\
                    my_overall_rank > their_overall_rank
         arg5.set_generator(arg5_generator)
         args.append(arg5)
         
-        arg6 = Argument(6, "I am a Special Ops officer, so my regular rank is 3 levels\n higher than it shows.")
+        arg6 = Argument(6, "I am a Special Ops officer, so my combined rank is 3 levels\n higher than it shows.")
         def arg6_generator(my: Agent, their: Agent):
-
-            my_overall_rank = my["Corporate Rank"] + 3 + my["Rank"]
-            their_overall_rank = their["Corporate Rank"] + their["Rank"]
+            my_military_rank = my["Military Rank"] if my["Tasked Status"] == "At Ease" else my["Task Importance"]
+            my_overall_rank = my["Corporate Rank"] + my_military_rank + 3
+            their_military_rank = their["Military Rank"] if their["Tasked Status"] == "At Ease" else their[
+                "Task Importance"]
+            their_overall_rank = their["Corporate Rank"] + their_military_rank
             return my["Special Ops"] == "Yes" and \
                    my_overall_rank > their["Task Importance"] and \
                    my_overall_rank > their_overall_rank
@@ -98,7 +107,7 @@ class HardCulture(Culture):
 
     def initialise_random_values(self, agent: Agent):
         rank = np.random.randint(1, 7)
-        agent.assign_property_value("Rank", rank)
+        agent.assign_property_value("Military Rank", rank)
 
         tasked_status = "Tasked" if np.random.randint(0, 5) != 0 else "At Ease"
         agent.assign_property_value("Tasked Status", tasked_status)

@@ -564,7 +564,8 @@ class Agent:
                     print("Argument_id: {}".format(argument_id))
                     sender = self.__simulator.agent(sender_id)
                     if AF.argument(argument_id).generate(self, sender):
-                        rebuttals[argument_id] = AF.argument(argument_id)
+                        if argument_id not in self.__arguments_used_this_round:
+                            rebuttals[argument_id] = AF.argument(argument_id)
                     # generate_argument(argument_id)
                 # Remove arguments that have already been used.
 
@@ -595,6 +596,7 @@ class Agent:
                         chosen_arg_id = acceptable_arguments[index].id()
                     print("Acceptable arguments: {}".format(acceptable_arguments))
                     print("Chosen argument: {}".format(chosen_arg_id))
+                    self.__arguments_used_this_round.add(chosen_arg_id)
                     # chosen_arg_id = acceptable_arguments[chosen_arg].id()
                     locution = Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=chosen_arg_id)
                     self.__simulator.send_locution(self.__agent_id, sender_id, locution)

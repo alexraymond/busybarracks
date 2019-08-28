@@ -1,0 +1,89 @@
+18 15
+0 -1 -1 -1 -1 -1 -1 1 -1 -1 -1 -1 -1 -1 10 
+0 -1 0 0 0 0 0 0 -1 -1 -1 -1 -1 -1 0 
+0 -1 0 -1 -1 -1 -1 0 0 0 0 0 0 -1 0 
+0 -1 0 0 0 0 0 0 -1 -1 -1 -1 0 -1 0 
+0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 -1 0 
+0 -1 0 0 0 0 0 2 -1 -1 -1 -1 -1 -1 0 
+0 -1 0 -1 -1 -1 -1 0 0 0 0 0 0 -1 0 
+0 -1 0 0 0 0 0 0 -1 -1 -1 -1 0 -1 0 
+0 -1 -1 -1 -1 -1 -1 0 0 0 0 0 0 -1 8 
+0 -1 0 0 0 3 0 0 -1 -1 -1 -1 -1 -1 0 
+9 -1 0 -1 -1 -1 -1 0 0 0 0 0 0 -1 0 
+0 -1 0 0 0 0 0 0 -1 -1 -1 -1 0 -1 0 
+0 -1 -1 -1 -1 -1 -1 0 0 4 0 0 0 -1 0 
+0 -1 0 0 0 0 0 0 -1 -1 -1 -1 -1 -1 0 
+0 -1 0 -1 -1 -1 -1 0 0 0 0 0 0 -1 0 
+0 -1 0 0 0 0 0 0 -1 -1 -1 -1 -1 -1 0
+0 -1 -1 -1 -1 -1 -1 0 0 -1 -1 -1 -1 -1 0
+0 0 0 0 6 0 0 0 0 0 0 0 0 0 7
+GOALS
+1 16 14
+2 1 7
+3 3 2
+4 2 12
+6 3 4
+7 4 12
+8 4 9
+9 6 11
+10 7 4
+CULTURE
+H
+MODE
+X
+PROPERTIES
+1 Corporate Rank VALUE 5
+1 Tasked Status VALUE Tasked
+1 Task Importance VALUE 4
+1 Military Rank VALUE 2
+1 Special Ops VALUE No
+1 Department VALUE Navy
+2 Corporate Rank VALUE 3
+2 Tasked Status VALUE At Ease
+2 Task Importance VALUE 5
+2 Military Rank VALUE 5
+2 Special Ops VALUE No
+2 Department VALUE Admin
+3 Corporate Rank VALUE 2
+3 Tasked Status VALUE Tasked
+3 Task Importance VALUE 5
+3 Military Rank VALUE 5
+3 Special Ops VALUE No
+3 Department VALUE Army
+4 Corporate Rank VALUE 1
+4 Tasked Status VALUE Tasked
+4 Task Importance VALUE 6
+4 Military Rank VALUE 6
+4 Special Ops VALUE No
+4 Department VALUE Army
+6 Corporate Rank VALUE 3
+6 Tasked Status VALUE Tasked
+6 Task Importance VALUE 6
+6 Military Rank VALUE 4
+6 Special Ops VALUE No
+6 Department VALUE Admin
+7 Corporate Rank VALUE 2
+7 Tasked Status VALUE Tasked
+7 Task Importance VALUE 5
+7 Military Rank VALUE 2
+7 Special Ops VALUE No
+7 Department VALUE Navy
+8 Corporate Rank VALUE 4
+8 Tasked Status VALUE At Ease
+8 Task Importance VALUE 6
+8 Military Rank VALUE 5
+8 Special Ops VALUE Yes
+8 Department VALUE Air Force
+9 Corporate Rank VALUE 4
+9 Tasked Status VALUE Tasked
+9 Task Importance VALUE 3
+9 Military Rank VALUE 3
+9 Special Ops VALUE No
+9 Department VALUE Army
+10 Corporate Rank VALUE 6
+10 Tasked Status VALUE Tasked
+10 Task Importance VALUE 6
+10 Military Rank VALUE 2
+10 Special Ops VALUE No
+10 Department VALUE Admin
+END

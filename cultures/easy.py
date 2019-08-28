@@ -9,8 +9,8 @@ class EasyCulture(Culture):
         # Properties of the culture with their default values go in self.properties.
         super().__init__()
         self.name = "Easy"
-        self.properties = {"rank": 0,
-                           "tasked_status": False}
+        self.properties = {"Military Rank": 0,
+                           "Tasked Status": False}
 
     def create_arguments(self):
         """
@@ -26,7 +26,7 @@ class EasyCulture(Culture):
         arg1 = Argument(1, "You should do it instead. My rank is higher than yours.")
 
         def arg1_generator(my: Agent, their: Agent):
-            return my["Rank"] > their["Rank"]
+            return my["Military Rank"] > their["Military Rank"]
 
         arg1.set_generator(arg1_generator)
         args.append(arg1)
@@ -43,10 +43,10 @@ class EasyCulture(Culture):
 
     def initialise_random_values(self, agent: Agent):
         rank = np.random.randint(1, 7)
-        agent.assign_property_value("rank", rank)
+        agent.assign_property_value("Military Rank", rank)
 
-        tasked_status = True if np.random.randint(0, 2) == 0 else False
-        agent.assign_property_value("tasked_status", tasked_status)
+        tasked_status = "Tasked" if np.random.randint(0, 5) != 0 else "At Ease"
+        agent.assign_property_value("Tasked Status", tasked_status)
 
     class ArgumentID(Enum):
         CHANGE_YOUR_ROUTE = 0

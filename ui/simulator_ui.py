@@ -256,6 +256,11 @@ class SimulatorUI(QMainWindow):
         v_layout.addWidget(frame)
         spacer = QSpacerItem(0, 25)
         # v_layout.addWidget(spacer)
+        buttons_label = QLabel(arg_widget)
+        buttons_label.setText("Possible valid responses:")
+        buttons_label.setAlignment(Qt.AlignCenter)
+        buttons_label.setFont(QFont("Helvetica", 14))
+        v_layout.addWidget(buttons_label)
         for button in buttons.keys():
             v_layout.addWidget(button)
 
