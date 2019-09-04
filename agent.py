@@ -38,11 +38,13 @@ class Agent:
         self.__culture = None
 
         self.score = 100
+        self.time_penalty = 0
         self.__human_controlled = False
         self.__current_direction = None
         self.__human_reply = None
 
         Broadcaster().subscribe("/request_agent_stats", self.send_properties)
+        Broadcaster().subscribe("/time_penalty", self.count_time_penalty)
 
     def __getitem__(self, item):
         return self.__dict__.get(item, None)
@@ -50,6 +52,8 @@ class Agent:
     def __setitem__(self, key, value):
         self.__dict__[key] = value
 
+    def count_time_penalty(self):
+        self.time_penalty += 1
 
     def is_human(self):
         return self.__human_controlled

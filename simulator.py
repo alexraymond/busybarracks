@@ -32,6 +32,7 @@ class Simulator:
         self.__game_over = False
 
         self.__culture = HardCulture()
+        self.__events = []
 
         if filename:
             self.load_grid(filename)
@@ -39,6 +40,10 @@ class Simulator:
 
         Broadcaster().subscribe("/log/raw", self.print_log)
         Broadcaster().subscribe("/human_collision", self.increment_collision_counter)
+        Broadcaster().subscribe("/new_event", self.add_event)
+
+    def add_event(self, event):
+        self.__events.append((event, time.time()))
 
     def increment_collision_counter(self):
         self.__num_collisions += 1
@@ -47,6 +52,7 @@ class Simulator:
         end_time = time.time()
         time_elapsed = end_time - self.__start_time
         human_score = self.agent(HUMAN).score
+        time_penalty = self.agent(HUMAN).time_penalty
         file = open(str(self.__player_id) + ".txt", "w")
         culture = '?'
         if type(self.__culture) == EasyCulture:
@@ -57,10 +63,16 @@ class Simulator:
             culture = 'H'
         file.write("Player id: " + str(self.__player_id) + "\n")
         file.write("Culture: " + culture + "\n")
-        file.write("Mode: " + 'X\n' if Agent.EXPLAINABLE else 'N\n')
+        file.write("Mode: " + 'X\n' if Agent.EXPLAINABLE else "Mode: " + 'N\n')
         file.write("Score: " + str(human_score) + "\n")
         file.write("Collisions: " + str(self.__num_collisions) + "\n")
         file.write("Time elapsed: " + str(time_elapsed) + "\n")
+        file.write("Time penalty: " + str(time_penalty) + "\n")
+        file.write("Events: ")
+        for event in self.__events:
+            event_text = event[0]
+            event_time = event[1]
+            file.write("{0} : {1}\n".format(event_text, event_time))
         file.close()
 
     def print_log(self, log):

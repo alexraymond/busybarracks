@@ -212,7 +212,8 @@ class Grid3D:
             print("Grid3D::attempt_move: Conflicts found between agents {0}.".format(conflicts))
             if 1 in conflicts:
                 Broadcaster().publish("/human_collision")
-            return False
+                Broadcaster().publish("/new_event", "COLLISION")
+                return False
 
         ######################################################################
         # Checks done. Moves are feasible, now move agents on next time step.#

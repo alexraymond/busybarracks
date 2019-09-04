@@ -58,19 +58,26 @@ class ButtonClusterUI(QWidget):
 
     def set_button_pressed(self, button):
         print("Button clicked!")
+        direction_char = ''
         if button == self.up_button:
             self.current_direction = MoveDirection.UP
+            direction_char = 'U'
         elif button == self.down_button:
             self.current_direction = MoveDirection.DOWN
+            direction_char = 'D'
         elif button == self.left_button:
             self.current_direction = MoveDirection.LEFT
+            direction_char = 'L'
         elif button == self.right_button:
             self.current_direction = MoveDirection.RIGHT
+            direction_char = 'R'
         elif button == self.wait_button:
             self.current_direction = MoveDirection.WAIT
+            direction_char = 'W'
         else:
             self.current_direction = None
         Broadcaster().publish("/direction_chosen", self.current_direction)
+        Broadcaster().publish("/new_event", direction_char)
         Broadcaster().publish("/advance_simulation")
 
 
@@ -80,6 +87,18 @@ class SidePanelUI(QWidget):
 
         v_layout = QVBoxLayout(self)
 
+        self.timer_label = QLabel(self)
+        self.timer_label.setFont(HUGE_FONT)
+        self.score_label = QLabel(self)
+        self.score_label.setFont(HUGE_FONT)
+        v_layout.addWidget(self.timer_label)
+        v_layout.addWidget(self.score_label)
+        self.time = QTime(0, 0, 0)
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.countdown_timer_label)
+
+        self.current_score = 100
+        self.time_penalty = 0
         self.score_label = QLabel(self)
         self.score_label.setFont(HUGE_FONT)
         v_layout.addWidget(self.score_label)
@@ -101,8 +120,6 @@ class SidePanelUI(QWidget):
 
         self.setLayout(v_layout)
 
-
-
         #######################
         # Edict subscriptions #
         #######################
@@ -110,6 +127,20 @@ class SidePanelUI(QWidget):
         # Broadcaster().subscribe("/log/raw", self.append_to_log)
         Broadcaster().subscribe("/property_label/raw", self.set_property_label)
         Broadcaster().subscribe("/score_changed", self.set_score)
+        Broadcaster().subscribe("/first_move", self.start_timer)
+
+    def start_timer(self):
+        self.timer.start(1000)
+
+    def countdown_timer_label(self):
+        self.time = self.time.addSecs(1)
+        self.timer_label.setText("Time: " + self.time.toString("mm:ss"))
+        self.score_label.setStyleSheet("QLabel {color : black}")
+        if self.time.second() % 5 == 0:
+            self.time_penalty += 1
+            Broadcaster().publish("/score_changed", self.current_score)
+            Broadcaster().publish("/time_penalty")
+            self.score_label.setStyleSheet("QLabel {color : red}")
 
     def append_to_log(self, text):
         # self.logger_text_edit.append(text)
@@ -126,4 +157,7 @@ class SidePanelUI(QWidget):
             self.property_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
 
     def set_score(self, score):
-        self.score_label.setText("Fuel: " + str(score) + u"\U000026FD")
+        self.current_score = score
+        print("Score: " + str(score))
+        print("Time Penalty: " + str(self.time_penalty))
+        self.score_label.setText("Fuel: " + str(score - self.time_penalty) + u"\U000026FD")

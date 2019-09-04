@@ -78,6 +78,8 @@ class HardCulture(Culture):
             my_overall_rank = my["Corporate Rank"] + my_military_rank + 3
             their_military_rank = their["Military Rank"] if their["Tasked Status"] == "At Ease" else their[
                 "Task Importance"]
+            if their["Special Ops"] == "Yes" and their["Department"] != "Admin":
+                their_military_rank += 3
             their_overall_rank = their["Corporate Rank"] + their_military_rank
             return my["Special Ops"] == "Yes" and \
                    my_overall_rank > their["Task Importance"] and \
@@ -170,6 +172,8 @@ class HardCulture(Culture):
         self.argumentation_framework.add_attack(a3, a7)
         self.argumentation_framework.add_attack(a6, a7)
         self.argumentation_framework.add_attack(a5, a9)
+        self.argumentation_framework.add_attack(a2, a5)
+        self.argumentation_framework.add_attack(a2, a4)
 
 
 
