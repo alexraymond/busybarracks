@@ -33,7 +33,7 @@ MODE
 N
 PROPERTIES
 1 Tasked Status VALUE Tasked
-1 Task Importance VALUE 4
+1 Task Importance VALUE 5
 1 Military Rank VALUE 2
 1 Special Ops VALUE No
 2 Tasked Status VALUE At Ease
@@ -41,31 +41,31 @@ PROPERTIES
 2 Military Rank VALUE 1
 2 Special Ops VALUE No
 3 Tasked Status VALUE Tasked
-3 Task Importance VALUE 5
-3 Military Rank VALUE 3
+3 Task Importance VALUE 6
+3 Military Rank VALUE 6
 3 Special Ops VALUE No
 4 Tasked Status VALUE Tasked
-4 Task Importance VALUE 6
-4 Military Rank VALUE 6
+4 Task Importance VALUE 4
+4 Military Rank VALUE 3
 4 Special Ops VALUE No
 6 Tasked Status VALUE Tasked
-6 Task Importance VALUE 6
-6 Military Rank VALUE 4
-6 Special Ops VALUE No
+6 Task Importance VALUE 1
+6 Military Rank VALUE 1
+6 Special Ops VALUE Yes
 7 Tasked Status VALUE Tasked
-7 Task Importance VALUE 1
-7 Military Rank VALUE 1
-7 Special Ops VALUE Yes
+7 Task Importance VALUE 6
+7 Military Rank VALUE 5
+7 Special Ops VALUE No
 8 Tasked Status VALUE Tasked
-8 Task Importance VALUE 2
+8 Task Importance VALUE 3
 8 Military Rank VALUE 2
 8 Special Ops VALUE Yes
 9 Tasked Status VALUE Tasked
-9 Task Importance VALUE 3
-9 Military Rank VALUE 3
-9 Special Ops VALUE Yes
-10 Tasked Status VALUE Tasked
+9 Task Importance VALUE 6
+9 Military Rank VALUE 2
+9 Special Ops VALUE No
+10 Tasked Status VALUE At Ease
 10 Task Importance VALUE 6
-10 Military Rank VALUE 2
-10 Special Ops VALUE No
+10 Military Rank VALUE 3
+10 Special Ops VALUE Yes
 END

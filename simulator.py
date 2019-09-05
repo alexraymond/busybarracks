@@ -68,7 +68,7 @@ class Simulator:
         file.write("Collisions: " + str(self.__num_collisions) + "\n")
         file.write("Time elapsed: " + str(time_elapsed) + "\n")
         file.write("Time penalty: " + str(time_penalty) + "\n")
-        file.write("Events: ")
+        file.write("Events:\n")
         for event in self.__events:
             event_text = event[0]
             event_time = event[1]

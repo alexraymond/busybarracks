@@ -588,6 +588,8 @@ class Agent:
                     if len(acceptable_arguments) == 0:
                         interactive_argument.possible_answers[-1] = "I have no arguments to challenge you. I shall give way, then."
                         interactive_argument.possible_answers[-2] = "I understand the risks, but I'll act as I please."
+                    else:
+                        interactive_argument.possible_answers[-1] = "Ok. I will give way to you then."
                     Broadcaster().publish("/new_argument", interactive_argument)
 
                 if len(acceptable_arguments) > 0:
