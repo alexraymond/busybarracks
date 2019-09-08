@@ -34,7 +34,7 @@ class MediumCulture(Culture):
         arg1.set_generator(arg1_generator)
         args.append(arg1)
 
-        arg2 = Argument(2, "However, I am currently performing a task and you are not.")
+        arg2 = Argument(2, "I am currently performing a task and you are not.")
 
         def arg2_generator(my: Agent, their: Agent):
             return my["Tasked Status"] == "Tasked" and their["Tasked Status"] == "At Ease"
@@ -42,7 +42,7 @@ class MediumCulture(Culture):
         arg2.set_generator(arg2_generator)
         args.append(arg2)
 
-        arg3 = Argument(3, "However, my task is more important than yours.")
+        arg3 = Argument(3, "My task is more important than yours.")
 
         def arg3_generator(my: Agent, their: Agent):
             return my["Task Importance"] > their["Military Rank"] and my["Task Importance"] > their["Task Importance"]

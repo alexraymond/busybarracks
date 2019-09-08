@@ -1,6 +1,7 @@
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 from PySide2.QtGui import *
+from PySide2.QtMultimedia import *
 from edict import Broadcaster
 from utils import *
 from ui.ui_utils import *
@@ -120,6 +121,8 @@ class SidePanelUI(QWidget):
 
         self.setLayout(v_layout)
 
+        self.beep = QSound("/home/alexraymond/busybarracks/ui/beep-29.wav")
+
         #######################
         # Edict subscriptions #
         #######################
@@ -141,6 +144,7 @@ class SidePanelUI(QWidget):
             Broadcaster().publish("/score_changed", self.current_score)
             Broadcaster().publish("/time_penalty")
             self.score_label.setStyleSheet("QLabel {color : red}")
+            self.beep.play()
 
     def append_to_log(self, text):
         # self.logger_text_edit.append(text)

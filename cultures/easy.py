@@ -23,7 +23,7 @@ class EasyCulture(Culture):
         motion.set_generator(lambda gen: True)  # Propositional arguments are always valid.
         args.append(motion)
 
-        arg1 = Argument(1, "You should do it instead. My rank is higher than yours.")
+        arg1 = Argument(1, "My rank is higher than yours.")
 
         def arg1_generator(my: Agent, their: Agent):
             return my["Military Rank"] > their["Military Rank"]
@@ -31,7 +31,7 @@ class EasyCulture(Culture):
         arg1.set_generator(arg1_generator)
         args.append(arg1)
 
-        arg2 = Argument(2, "However, I am currently performing a task and you are not.")
+        arg2 = Argument(2, "I am currently performing a task and you are not.")
 
         def arg2_generator(my: Agent, their: Agent):
             return my["Tasked Status"] == "Tasked" and their["Tasked Status"] == "At Ease"

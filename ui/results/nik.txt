@@ -1,0 +1,4 @@
+Player id: nik
+Score: 57
+Collisions: 1
+Time elapsed: 59.32702016830444

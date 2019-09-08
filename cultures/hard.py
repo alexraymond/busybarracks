@@ -35,13 +35,13 @@ class HardCulture(Culture):
         arg1.set_generator(arg1_generator)
         args.append(arg1)
 
-        arg2 = Argument(2, "However, I am currently performing a task and you are not.")
+        arg2 = Argument(2, "I am currently performing a task and you are not.")
         def arg2_generator(my: Agent, their: Agent):
             return my["Tasked Status"] == "Tasked" and their["Tasked Status"] == "At Ease"
         arg2.set_generator(arg2_generator)
         args.append(arg2)
 
-        arg3 = Argument(3, "I'm afraid my task is more important than yours.")
+        arg3 = Argument(3, "My task is more important than yours.")
         def arg3_generator(my: Agent, their: Agent):
             return my["Tasked Status"] == "Tasked" and \
                    my["Task Importance"] > their["Military Rank"] and \
@@ -49,7 +49,7 @@ class HardCulture(Culture):
         arg3.set_generator(arg3_generator)
         args.append(arg3)
         
-        arg4 = Argument(4, "Fortunately, my combined rank is\n higher than your rank and task importance.")
+        arg4 = Argument(4, "My combined rank is\n higher than your rank and task importance.")
         def arg4_generator(my: Agent, their: Agent):
             my_military_rank = my["Military Rank"] if my["Tasked Status"] == "At Ease" else my["Task Importance"]
             my_overall_rank = my["Corporate Rank"] + my_military_rank
@@ -99,7 +99,7 @@ class HardCulture(Culture):
         arg8.set_generator(arg8_generator)
         args.append(arg8)
         
-        arg9 = Argument(9, "However, you're from the Admin department, so your\n Special Ops benefits don't apply.")
+        arg9 = Argument(9, "You're from the Admin department, so your\n Special Ops benefits don't apply.")
         def arg9_generator(my: Agent, their: Agent):
             return their["Department"] == "Admin"
         arg9.set_generator(arg9_generator)

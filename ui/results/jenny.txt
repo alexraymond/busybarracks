@@ -1,0 +1,6 @@
+Player id: jenny
+Culture: M
+N
+Score: 56
+Collisions: 0
+Time elapsed: 329.8130669593811
