@@ -225,6 +225,18 @@ class GridUI(QGraphicsView):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
+    def save_snapshot(self, player_id, time_step):
+        filename = "results/{}/{}.png".format(player_id, time_step)
+        # image = QImage(filename)
+        # painter = QPainter(image)
+        # painter.setRenderHint(QPainter.Antialiasing)
+        # self.grid_scene.render(painter)
+        # image.save(filename)
+
+        pixmap = self.grab()
+        pixmap.save(filename)
+
+
     def resizeEvent(self, event):
         self.fitInView(self.grid_rect, Qt.KeepAspectRatio)
 

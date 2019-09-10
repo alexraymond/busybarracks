@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import os
 from pydoc import locate
 from grid3d import Grid3D
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE
@@ -39,6 +40,8 @@ class Simulator:
             self.load_grid(filename)
             self.load_culture(filename)
 
+        os.mkdir("results/{}/".format(player_id))
+
         Broadcaster().subscribe("/log/raw", self.print_log)
         Broadcaster().subscribe("/human_collision", self.increment_collision_counter)
         Broadcaster().subscribe("/new_event", self.add_event)
@@ -58,7 +61,7 @@ class Simulator:
         time_elapsed = end_time - self.__start_time
         human_score = self.agent(HUMAN).score
         time_penalty = self.agent(HUMAN).time_penalty
-        file = open("results/" + str(self.__player_id) + ".txt", "w")
+        file = open("results/{}/results.txt".format(self.__player_id), "w")
         culture = '?'
         if type(self.__culture) == EasyCulture:
             culture = 'E'

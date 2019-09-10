@@ -19,6 +19,8 @@ class SimulatorUI(QMainWindow):
 
         # TODO: Clean this mess
 
+        self.player_id = player_id
+
         self.simulator = Simulator(width, height, filename, player_id)
 
         self.setWindowTitle("Busy Barracks")
@@ -381,6 +383,7 @@ class SimulatorUI(QMainWindow):
         if success:
             self.update_step(self.step_slider.value() + 1)
             self.reset_human_direction()  # TODO: Remove hideous workaround
+            self.grid_view.save_snapshot(self.player_id, self.step_slider.value() + 1)
         # else:
         #     message_box = QMessageBox()
         #     message_box.setText("Failed to perform move.")
