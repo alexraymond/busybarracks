@@ -41,6 +41,7 @@ class EasyCulture(Culture):
 
         self.argumentation_framework.add_arguments(args)
 
+
     def initialise_random_values(self, agent: Agent):
         rank = np.random.randint(1, 7)
         agent.assign_property_value("Military Rank", rank)

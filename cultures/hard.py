@@ -29,19 +29,19 @@ class HardCulture(Culture):
         motion.set_generator(lambda gen: True)  # Propositional arguments are always valid.
         args.append(motion)
 
-        arg1 = Argument(1, "My military rank is higher than yours.")
+        arg1 = Argument(1, "{0} Military Rank is higher than {1}s")
         def arg1_generator(my: Agent, their: Agent):
             return my["Military Rank"] > their["Military Rank"]
         arg1.set_generator(arg1_generator)
         args.append(arg1)
 
-        arg2 = Argument(2, "I am currently performing a task and you are not.")
+        arg2 = Argument(2, "{0} status is Tasked and {1} status is At Ease")
         def arg2_generator(my: Agent, their: Agent):
             return my["Tasked Status"] == "Tasked" and their["Tasked Status"] == "At Ease"
         arg2.set_generator(arg2_generator)
         args.append(arg2)
 
-        arg3 = Argument(3, "My task is more important than yours.")
+        arg3 = Argument(3, "{0} task is more important than {1}s")
         def arg3_generator(my: Agent, their: Agent):
             return my["Tasked Status"] == "Tasked" and \
                    my["Task Importance"] > their["Military Rank"] and \
@@ -49,7 +49,7 @@ class HardCulture(Culture):
         arg3.set_generator(arg3_generator)
         args.append(arg3)
         
-        arg4 = Argument(4, "My combined rank is\n higher than your rank and task importance.")
+        arg4 = Argument(4, "{0} combined rank is higher than {1} rank and task importance")
         def arg4_generator(my: Agent, their: Agent):
             my_military_rank = my["Military Rank"] if my["Tasked Status"] == "At Ease" else my["Task Importance"]
             my_overall_rank = my["Corporate Rank"] + my_military_rank
@@ -59,7 +59,7 @@ class HardCulture(Culture):
         arg4.set_generator(arg4_generator)
         args.append(arg4)
         
-        arg5 = Argument(5, "I am from the Admin department, so my corporate rank is actually\n 2 levels higher than it shows.")
+        arg5 = Argument(5, "{0} department is Admin (corporate rank + 2)")
         def arg5_generator(my: Agent, their: Agent):
             my_military_rank = my["Military Rank"] if my["Tasked Status"] == "At Ease" else my["Task Importance"]
             my_overall_rank = my["Corporate Rank"] + 2 + my_military_rank
@@ -72,7 +72,7 @@ class HardCulture(Culture):
         arg5.set_generator(arg5_generator)
         args.append(arg5)
         
-        arg6 = Argument(6, "I am a Special Ops officer, so my combined rank is 3 levels\n higher than it shows.")
+        arg6 = Argument(6, "{0} combined rank is 3 levels higher because of Special Ops status")
         def arg6_generator(my: Agent, their: Agent):
             my_military_rank = my["Military Rank"] if my["Tasked Status"] == "At Ease" else my["Task Importance"]
             my_overall_rank = my["Corporate Rank"] + my_military_rank + 3
@@ -87,19 +87,19 @@ class HardCulture(Culture):
         arg6.set_generator(arg6_generator)
         args.append(arg6)
         
-        arg7 = Argument(7, "Corporate ranks don't matter because we are from the same department.")
+        arg7 = Argument(7, "corporate ranks don't matter because both of you are from the same department")
         def arg7_generator(my: Agent, their: Agent):
             return my["Department"] == their["Department"]
         arg7.set_generator(arg7_generator)
         args.append(arg7)
         
-        arg8 = Argument(8, "I'm a Special Ops officer, so this rule does not apply to us.")
+        arg8 = Argument(8, "this rule does not apply because of {0} Special Ops status")
         def arg8_generator(my: Agent, their: Agent):
             return my["Special Ops"] == "Yes"
         arg8.set_generator(arg8_generator)
         args.append(arg8)
         
-        arg9 = Argument(9, "You're from the Admin department, so your\n Special Ops benefits don't apply.")
+        arg9 = Argument(9, "{1} Special Ops benefits don't apply because {1} department is Admin")
         def arg9_generator(my: Agent, their: Agent):
             return their["Department"] == "Admin"
         arg9.set_generator(arg9_generator)

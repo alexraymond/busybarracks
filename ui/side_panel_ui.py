@@ -116,6 +116,13 @@ class SidePanelUI(QWidget):
         self.property_label.setFont(LARGE_FONT)
         v_layout.addWidget(self.property_label)
 
+        self.shown_agent_id = 0
+
+        self.hint_label = QLabel(self)
+        self.hint_label.setWordWrap(True)
+        self.hint_label.setFont(LARGE_FONT)
+        v_layout.addWidget(self.hint_label)
+
         self.button_cluster = ButtonClusterUI(self)
         v_layout.addWidget(self.button_cluster)
 
@@ -131,6 +138,12 @@ class SidePanelUI(QWidget):
         Broadcaster().subscribe("/property_label/raw", self.set_property_label)
         Broadcaster().subscribe("/score_changed", self.set_score)
         Broadcaster().subscribe("/first_move", self.start_timer)
+        Broadcaster().subscribe("/new_hint", self.set_hint_label)
+
+    def set_hint_label(self, text):
+        prefix = "Hint (Agent {}): ".format(self.shown_agent_id)
+        self.hint_label.setText(prefix + text)
+        self.hint_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
 
     def start_timer(self):
         self.timer.start(1000)
@@ -157,6 +170,7 @@ class SidePanelUI(QWidget):
             self.human_property_label.setFont(LARGE_FONT)
             self.human_property_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
         else:
+            self.shown_agent_id = agent_id
             self.property_label.setText("Agent {}:\n".format(agent_id) + text)
             self.property_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
 

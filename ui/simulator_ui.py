@@ -146,6 +146,8 @@ class SimulatorUI(QMainWindow):
         # Connecting actions to slots #
         ###############################
 
+        self.resize(1024, 1024)
+
         self.add_global_obstacle_action.toggled.connect(self.add_global_obstacle_toggled)
         self.add_local_obstacle_action.toggled.connect(self.add_local_obstacle_toggled)
         self.add_agent_action.toggled.connect(self.add_agent_toggled)

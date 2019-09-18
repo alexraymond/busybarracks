@@ -2,6 +2,9 @@ from itertools import count
 import numpy as np
 import collections
 import copy
+
+from systemd.journal import send
+
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE, LOCAL_OBSTACLE
 from edict import Broadcaster
 from utils import *
@@ -579,27 +582,11 @@ class Agent:
                     acceptable_arguments.append(arg)
                     print("Plausible argument from {}: {}".format(their_argument_id, arg))
 
-                if self.is_human() and Agent.EXPLAINABLE:
-                    interactive_argument = InteractiveArgument()
-                    interactive_argument.proposed_argument = argument_text
-                    interactive_argument.sender_id = sender_id
-                    for argument in acceptable_arguments:
-                        interactive_argument.possible_answers[argument.id()] = argument.descriptive_text()
-                    if len(acceptable_arguments) == 0:
-                        interactive_argument.possible_answers[-1] = "I have no arguments to challenge you. I shall give way, then."
-                        interactive_argument.possible_answers[-2] = "I understand the risks, but I'll act as I please."
-                    else:
-                        interactive_argument.possible_answers[-1] = "Ok. I will give way to you then."
-                    Broadcaster().publish("/new_argument", interactive_argument)
-
                 if len(acceptable_arguments) > 0:
                     # Rebuttal.
                     # TODO: Remove randomness. Should pick best argument.
-                    if self.is_human() and Agent.EXPLAINABLE:
-                        chosen_arg_id = self.__human_reply
-                    else:
-                        index = np.random.randint(0, len(acceptable_arguments))
-                        chosen_arg_id = acceptable_arguments[index].id()
+                    index = np.random.randint(0, len(acceptable_arguments))
+                    chosen_arg_id = acceptable_arguments[index].id()
                     print("Acceptable arguments: {}".format(acceptable_arguments))
                     print("Chosen argument: {}".format(chosen_arg_id))
                     self.__arguments_used_this_round.add(chosen_arg_id)
@@ -611,20 +598,66 @@ class Agent:
                     self.__conceding_to_agents.add(sender_id)
                     log = "{0} convinced {1}.".format(sender_id, self.__agent_id)
                     Broadcaster().publish("/log/raw", log)
-                    if self.is_AI() and Agent.EXPLAINABLE and sender_id == HUMAN:
-                        interactive_argument = InteractiveArgument()
-                        interactive_argument.proposed_argument = "Ok, you have a point. I will move out of your way."
-                        interactive_argument.sender_id = self.__agent_id
-                        interactive_argument.possible_answers[0] = "Thank you."
-                        Broadcaster().publish("/new_argument", interactive_argument)
                     # Check if it knows the winner's intentions.
                     if sender_id not in self.__agents_estimated_plans:
                         locution = Locution(ActType.ASK, ContentType.WAYPOINTS)
                         self.__simulator.send_locution(self.__agent_id, sender_id, locution)
                     self.reroute_avoiding()
                     self.__negotiated_with = self.__conceding_to_agents
+                    unsuccessful_arguments = self.__arguments_used_this_round
+                    locution = Locution(ActType.CONCEDE, ContentType.MULTIPLE_ARGUMENTS, failed_arguments=list(unsuccessful_arguments))
+                    self.__simulator.send_locution(self.__agent_id, sender_id, locution)
                     log = "{0} rerouted to {1}".format(self.__agent_id, self.__plan)
                     Broadcaster().publish("/log/raw", log)
+
+        elif received_locution.act_type() == ActType.CONCEDE:
+            if received_locution.content_type() == ContentType.MULTIPLE_ARGUMENTS and Agent.EXPLAINABLE:
+                print("\n########## VICTORIOUS ARGUMENTS ###########\n")
+                Broadcaster().publish("/request_agent_stats", HUMAN)
+                Broadcaster().publish("/request_agent_stats", sender_id if sender_id != HUMAN else self.agent_id())
+                AF = self.__culture.argumentation_framework
+                victorious_arguments = list(self.__arguments_used_this_round)
+                winner = "<font color=\"red\">your</font>"
+                loser = "<font color=\"green\">their</font>"
+                if self.__agent_id != HUMAN:
+                    winner = "<font color=\"green\">their</font>"
+                    loser = "<font color=\"red\">your</font>"
+                for argument_id in victorious_arguments:
+                    print(self.__culture.argumentation_framework.argument(argument_id).descriptive_text().format(winner, loser))
+                print("\n########## LOSER ARGUMENTS ###########\n")
+                print(received_locution.content()['failed_arguments'])
+                failed_arguments = received_locution.content()['failed_arguments']
+                for argument_id in failed_arguments:
+                    print(self.__culture.argumentation_framework.argument(argument_id).descriptive_text().format(winner, loser))
+
+                if len(failed_arguments) > 0:
+                    conjunctions = ["Although", "Even though"]
+                    failed_arguments = sorted(failed_arguments)
+                    failed_argument_text = AF.argument(failed_arguments[-1]).descriptive_text().format(loser, winner)
+                    hint = conjunctions[np.random.randint(len(conjunctions))] + " " + failed_argument_text + ", "
+                    rebuttals_to_failed_argument = AF.arguments_that_attack(failed_arguments[-1])
+                    used_arguments = [argument for argument in victorious_arguments if argument in rebuttals_to_failed_argument]
+                    used_argument_text = AF.argument(used_arguments[0]).descriptive_text().format(winner, loser)
+                    hint += used_argument_text + "."
+                else:
+                    if len(victorious_arguments) > 0:
+                        hint = AF.argument(victorious_arguments[0]).descriptive_text().format(winner, loser) + "."
+                        split_words = hint.split()
+                        if split_words[1] == "color=\"red\">your</font>":
+                            split_words[0] = "<font color=\"red\">Your</font>"
+                            del split_words[1]
+                        elif split_words[1] == "color=\"green\">their</font>":
+                            split_words[0] = "<font color=\"green\">Their</font>"
+                            del split_words[1]
+                        else:
+                            split_words[0].capitalize()
+                        hint = ' '.join(split_words)
+                    else:
+                        hint = "There are no arguments that challenge " + winner + " right of way."
+
+
+                Broadcaster().publish("/new_hint", hint)
+
 
 
 
