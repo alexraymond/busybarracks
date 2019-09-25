@@ -108,10 +108,6 @@ class SidePanelUI(QWidget):
         # self.logger_text_edit.setReadOnly(True)
         # v_layout.addWidget(self.logger_text_edit)
 
-        self.human_property_label = QLabel(self)
-        self.human_property_label.setFont(LARGE_FONT)
-        v_layout.addWidget(self.human_property_label)
-
         self.property_label = QLabel(self)
         self.property_label.setFont(LARGE_FONT)
         v_layout.addWidget(self.property_label)
@@ -163,16 +159,11 @@ class SidePanelUI(QWidget):
         # self.logger_text_edit.append(text)
         pass
 
-    def set_property_label(self, agent_id, text):
+    def set_property_label(self, text):
         print("Setting property label")
-        if agent_id == HUMAN:
-            self.human_property_label.setText("You:\n" + text)
-            self.human_property_label.setFont(LARGE_FONT)
-            self.human_property_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
-        else:
-            self.shown_agent_id = agent_id
-            self.property_label.setText("Agent {}:\n".format(agent_id) + text)
-            self.property_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
+        self.property_label.setText(text)
+        self.property_label.setFont(LARGE_FONT)
+        self.property_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
 
     def set_score(self, score):
         self.current_score = score

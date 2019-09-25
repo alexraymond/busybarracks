@@ -173,7 +173,6 @@ class SimulatorUI(QMainWindow):
         #######################
 
         Broadcaster().subscribe("/cell_pressed", self.cell_pressed)
-        Broadcaster().subscribe("/new_argument", self.show_argument)
         Broadcaster().subscribe("/human_collision", self.show_collision_dialogue)
         Broadcaster().subscribe("/advance_simulation", self.advance_simulation)
         Broadcaster().subscribe("/game_over", self.show_game_over)
@@ -182,7 +181,7 @@ class SimulatorUI(QMainWindow):
     def show_game_over(self):
         msg_box = QMessageBox()
         msg_box.setWindowTitle("Success!")
-        msg_box.setFont(MEDIUM_FONT)
+        msg_box.setFont(LARGE_FONT)
         msg_box.setText("Congratulations! You have reached the goal.")
         msg_box.exec_()
         self.simulator.save_results()
@@ -191,98 +190,9 @@ class SimulatorUI(QMainWindow):
     def show_collision_dialogue(self):
         msg_box = QMessageBox()
         msg_box.setWindowTitle("Collision!")
-        msg_box.setFont(MEDIUM_FONT)
+        msg_box.setFont(LARGE_FONT)
         msg_box.setText("You have collided with another officer and it was <b>your fault</b>.\nLose 20 " + u"\U000026FD" + ".")
         msg_box.exec_()
-
-    def show_argument2(self, interactive_argument: InteractiveArgument):
-        print("Showing message box!")
-        print(interactive_argument)
-        msg_box = QMessageBox()
-        msg_box.setWindowTitle("Agent {} says to you:".format(interactive_argument.sender_id))
-        msg_box.setText(interactive_argument.proposed_argument)
-        buttons = {}
-        for key, argument in interactive_argument.possible_answers.items():
-            button = msg_box.addButton(argument, QMessageBox.AcceptRole)
-            buttons[button] = key
-
-        msg_box.exec_()
-
-    def show_argument(self, interactive_argument: InteractiveArgument):
-        arg_widget = QDialog()
-        other_agent_id = interactive_argument.sender_id
-        Broadcaster().publish("/request_agent_stats", HUMAN)
-        Broadcaster().publish("/request_agent_stats", other_agent_id)
-        arg_widget.setWindowTitle("Agent {} says to you:".format(other_agent_id))
-        main_arg_label = QLabel(arg_widget)
-        main_arg_label.setText("Agent {}: <i>\"".format(other_agent_id) + interactive_argument.proposed_argument + "\"</i>")
-        main_arg_label.setFont(LARGE_FONT)
-        buttons = {}
-        button_group = QButtonGroup(arg_widget)
-        def button_pressed(button):
-            arg_id = buttons[button]
-            arg_widget.done(arg_id)
-            Broadcaster().publish("/new_event", "ARG{}".format(arg_id))
-
-
-        for key, argument in interactive_argument.possible_answers.items():
-            button = QPushButton(argument, arg_widget)
-            button.setFont(LARGE_FONT)
-            button_group.addButton(button)
-            buttons[button] = key  # Inverse dict to find key when pressing button.
-            button_group.buttonClicked.connect(button_pressed)
-
-        frame = QFrame(arg_widget)
-
-        # h_layout = QHBoxLayout(arg_widget)
-        # human_agent_stats_label = QLabel(arg_widget)
-        # text = "You:\n"
-        # text += self.simulator.agent(HUMAN).get_properties_as_text()
-        # human_agent_stats_label.setText(text)
-        # font = QFont("Helvetica", 14)
-        # font.setBold(True)
-        # human_agent_stats_label.setFont(font)
-        #
-        # separator_label = QLabel(arg_widget)
-        # separator_label.setFrameStyle(QFrame.VLine | QFrame.Plain)
-        #
-        # frame.setFrameStyle(QFrame.Panel | QFrame.Plain)
-        #
-        # computer_agent_stats_label = QLabel(arg_widget)
-        # text = "Agent {}:\n".format(other_agent_id)
-        # text += self.simulator.agent(other_agent_id).get_properties_as_text()
-        # computer_agent_stats_label.setText(text)
-        # computer_agent_stats_label.setFont(QFont("Helvetica", 14))
-        #
-        # h_layout.addWidget(human_agent_stats_label)
-        # h_layout.addWidget(separator_label)
-        # h_layout.addWidget(computer_agent_stats_label)
-        # frame.setLayout(h_layout)
-
-        v_layout = QVBoxLayout(arg_widget)
-        v_layout.addWidget(main_arg_label)
-        v_layout.addWidget(frame)
-        spacer = QSpacerItem(0, 25)
-        # v_layout.addWidget(spacer)
-        buttons_label = QLabel(arg_widget)
-        buttons_label.setText("Possible valid responses:")
-        buttons_label.setAlignment(Qt.AlignCenter)
-        buttons_label.setFont(QFont("Helvetica", 14))
-        v_layout.addWidget(buttons_label)
-        for button in buttons.keys():
-            v_layout.addWidget(button)
-
-        # self.setWindowModality(QWidget.Modal)
-        arg_widget.setLayout(v_layout)
-        arg_widget.setMinimumSize(300, 200)
-        arg_widget.setWindowFlags(Qt.Window | Qt.WindowTitleHint | Qt.CustomizeWindowHint)
-        open_time = time.time()
-        chosen_argument = arg_widget.exec_()
-        close_time = time.time()
-        Broadcaster().publish("/human_reply", chosen_argument)
-        Broadcaster().publish("/time_in_popup", close_time - open_time)
-
-
 
     def rewind_simulation(self):
         self.step_slider.setValue(0)

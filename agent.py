@@ -46,7 +46,6 @@ class Agent:
         self.__current_direction = None
         self.__human_reply = None
 
-        Broadcaster().subscribe("/request_agent_stats", self.send_properties)
         Broadcaster().subscribe("/time_penalty", self.count_time_penalty)
 
     def __getitem__(self, item):
@@ -115,12 +114,6 @@ class Agent:
             value = self.__dict__.get(property, None)
             text += str(property) + ": " + str(value) + "\n"
         return text
-
-    def send_properties(self, agent_id):
-        if self.__agent_id != agent_id:
-            return
-        text = self.get_properties_as_text()
-        Broadcaster().publish("/property_label/raw", agent_id, text)
 
     def set_culture(self, culture):
         self.__culture = culture
@@ -611,10 +604,9 @@ class Agent:
                     Broadcaster().publish("/log/raw", log)
 
         elif received_locution.act_type() == ActType.CONCEDE:
+            Broadcaster().publish("/request_agent_stats", sender_id if sender_id != HUMAN else self.agent_id())
             if received_locution.content_type() == ContentType.MULTIPLE_ARGUMENTS and Agent.EXPLAINABLE:
                 print("\n########## VICTORIOUS ARGUMENTS ###########\n")
-                Broadcaster().publish("/request_agent_stats", HUMAN)
-                Broadcaster().publish("/request_agent_stats", sender_id if sender_id != HUMAN else self.agent_id())
                 AF = self.__culture.argumentation_framework
                 victorious_arguments = list(self.__arguments_used_this_round)
                 winner = "<font color=\"red\">your</font>"

@@ -46,6 +46,21 @@ class Simulator:
         Broadcaster().subscribe("/human_collision", self.increment_collision_counter)
         Broadcaster().subscribe("/new_event", self.add_event)
         Broadcaster().subscribe("/time_in_popup", self.add_time_in_popup)
+        Broadcaster().subscribe("/request_agent_stats", self.send_agent_stats)
+
+    def send_agent_stats(self, agent_id):
+        text = "<big> <font color=\"red\">You</font> vs. <font color=\"green\">Agent {}</font></big><br>".format(agent_id)
+        human_agent = self.agent(HUMAN)
+        cpu_agent = self.agent(agent_id)
+        for property in human_agent.culture_properties():
+            human_property_value = human_agent.__dict__.get(property, None)
+            human_text = "<font color=\"red\">" + str(human_property_value) + "</font>"
+            cpu_property_value = cpu_agent.__dict__.get(property, None)
+            cpu_text = "<font color=\"green\">" + str(cpu_property_value) + "</font>"
+            line = str(property) + ":\t" + human_text + " vs. " + cpu_text + "<br>"
+            text += line
+        Broadcaster().publish("/property_label/raw", text)
+
 
     def add_time_in_popup(self, time):
         self.__time_reading_popups += time
