@@ -46,7 +46,7 @@ class Simulator:
         Broadcaster().subscribe("/human_collision", self.increment_collision_counter)
         Broadcaster().subscribe("/new_event", self.add_event)
         Broadcaster().subscribe("/time_in_popup", self.add_time_in_popup)
-        Broadcaster().subscribe("/request_agent_stats", self.send_agent_stats)
+        Broadcaster().subscribe("/highlighted_agent", self.send_agent_stats)
 
     def send_agent_stats(self, agent_id):
         text = "<big> <font color=\"red\">You</font> vs. <font color=\"green\">Agent {}</font></big><br>".format(agent_id)

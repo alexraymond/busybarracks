@@ -112,8 +112,6 @@ class SidePanelUI(QWidget):
         self.property_label.setFont(LARGE_FONT)
         v_layout.addWidget(self.property_label)
 
-        self.shown_agent_id = 0
-
         self.hint_label = QLabel(self)
         self.hint_label.setWordWrap(True)
         self.hint_label.setFont(LARGE_FONT)
@@ -136,8 +134,8 @@ class SidePanelUI(QWidget):
         Broadcaster().subscribe("/first_move", self.start_timer)
         Broadcaster().subscribe("/new_hint", self.set_hint_label)
 
-    def set_hint_label(self, text):
-        prefix = "Hint (Agent {}): ".format(self.shown_agent_id)
+    def set_hint_label(self, cpu_agent_id, text):
+        prefix = "Hint (Agent {}): ".format(cpu_agent_id)
         self.hint_label.setText(prefix + text)
         self.hint_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
 

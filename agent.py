@@ -19,6 +19,7 @@ class Agent:
     def __init__(self, agent_id, grid_dimensions, simulator):
         self.__goal = None
         self.__plan = []
+        self.__optimal_plan = []
         self.__known_cells = {}
         self.__agent_id = agent_id
         self.__visibility_radius = 2  # np.random.randint(4, 5)  # TODO: Change this.
@@ -27,6 +28,7 @@ class Agent:
         self.__latest_world_model = None
         self.__previous_world_models = {}
         self.__previous_plans = {}
+        self.__previous_optimal_plans = {}
         self.__grid_width, self.__grid_height = grid_dimensions
         self.__simulator = simulator
         self.__other_agents_waypoints = {}
@@ -101,6 +103,7 @@ class Agent:
             self.__plan[1] = ((x, y), self.__current_time_step+1)
         self.__current_direction = direction
         self.__previous_plans[self.__current_time_step] = copy.deepcopy(self.__plan)
+        self.__previous_optimal_plans[self.__current_time_step] = copy.deepcopy(self.__optimal_plan)
         Broadcaster().publish("/score_changed", self.score)
 
     def culture_properties(self):
@@ -199,11 +202,13 @@ class Agent:
             return
         if self.__current_pos != self.__goal:
             self.__plan = self.find_path_3D_search((self.__current_pos, self.__current_time_step), self.__goal)
+            self.__optimal_plan = self.find_path_3D_search((self.__current_pos, self.__current_time_step), self.__goal, concede_to_agents=False)
             if self.__human_controlled:
                 pass
                 # self.set_direction(self.__current_direction)
             if overwrite or (len(self.__previous_plans) <= 1 or time_step not in self.__previous_plans):
                 self.__previous_plans[time_step] = copy.deepcopy(self.__plan)
+                self.__previous_optimal_plans[time_step] = copy.deepcopy(self.__optimal_plan)
         # print("Path from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.__plan))
         # print("Turns from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.next_waypoints()))
 
@@ -604,7 +609,8 @@ class Agent:
                     Broadcaster().publish("/log/raw", log)
 
         elif received_locution.act_type() == ActType.CONCEDE:
-            Broadcaster().publish("/request_agent_stats", sender_id if sender_id != HUMAN else self.agent_id())
+            cpu_agent_id = sender_id if sender_id != HUMAN else self.agent_id()
+            Broadcaster().publish("/highlighted_agent", cpu_agent_id)
             if received_locution.content_type() == ContentType.MULTIPLE_ARGUMENTS and Agent.EXPLAINABLE:
                 print("\n########## VICTORIOUS ARGUMENTS ###########\n")
                 AF = self.__culture.argumentation_framework
@@ -648,7 +654,7 @@ class Agent:
                         hint = "There are no arguments that challenge " + winner + " right of way."
 
 
-                Broadcaster().publish("/new_hint", hint)
+                Broadcaster().publish("/new_hint", cpu_agent_id, hint)
 
 
 
@@ -679,6 +685,9 @@ class Agent:
 
     def plan_at(self, t):
         return self.__previous_plans.get(t, None)
+
+    def optimal_plan_at(self, t):
+        return self.__previous_optimal_plans.get(t, None)
 
     def goal(self):
         return self.__goal

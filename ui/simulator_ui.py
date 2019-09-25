@@ -328,6 +328,7 @@ class SimulatorUI(QMainWindow):
         # FIXME: Should pass agents instead of creating all those data structures.
         world_models = {}
         plans = {}
+        optimal_plans = {}
         visibilities = {}
         positions = {}
         goals = {}
@@ -335,11 +336,13 @@ class SimulatorUI(QMainWindow):
             positions[agent.agent_id()] = agent.current_pos()
             world_models[agent.agent_id()] = agent.world_model_at(step)
             plans[agent.agent_id()] = agent.plan_at(step)
+            optimal_plans[agent.agent_id()] = agent.optimal_plan_at(step)
             visibilities[agent.agent_id()] = agent.visibility_radius()
             goals[agent.agent_id()] = agent.goal()
         self.grid_view.update_agent_positions(positions)
         self.grid_view.update_agent_models(world_models)
         self.grid_view.update_agent_plans(plans)
+        self.grid_view.update_agent_optimal_plans(optimal_plans)
         self.grid_view.update_agent_visibilities(visibilities)
         self.grid_view.update_agent_goals(goals)
 
