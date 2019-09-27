@@ -30,8 +30,8 @@ class GridCellUI(QGraphicsRectItem):
         self.hover_enter_callback = None
         self.hover_leave_callback = None
         self.mouse_press_callback = None
-        self.setAcceptHoverEvents(True)
-        self.setAcceptDrops(True)
+        self.setAcceptHoverEvents(False)
+        self.setAcceptDrops(False)
 
     def set_value(self, value, special_cell=None):
         self.cell_value = value

@@ -10,6 +10,8 @@ from edict import Broadcaster
 from grid2d import LOCAL_OBSTACLE
 from utils import *
 from ui.ui_utils import *
+from PySide2.QtMultimedia import *
+from PySide2.QtMultimediaWidgets import *
 
 
 class SimulatorUI(QMainWindow):
@@ -167,6 +169,22 @@ class SimulatorUI(QMainWindow):
         # self.arg_widget = QDialog()
         # self.arg_widget.hide()
 
+        ######################
+        # Set up webcam feed #
+        ######################
+        print("Available cameras: {}".format(QCameraInfo.availableCameras()))
+        self.camera = QCamera(QCameraInfo.availableCameras()[0])
+        self.viewfinder = QCameraViewfinder(self)
+        self.camera.setViewfinder(self.viewfinder)
+        self.viewfinder.show()
+        self.camera_dock_widget = QDockWidget("Camera Feed", self)
+        self.camera_dock_widget.setWidget(self.viewfinder)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.camera_dock_widget)
+        self.recorder = QMediaRecorder(self.camera)
+        self.recorder.setOutputLocation(QUrl.fromLocalFile("results/{}/recording.mp4".format(player_id)))
+        self.camera.setCaptureMode(QCamera.CaptureVideo)
+        self.camera.start()
+        self.recorder.record()
 
         #######################
         # Edict subscriptions #
@@ -185,6 +203,7 @@ class SimulatorUI(QMainWindow):
         msg_box.setText("Congratulations! You have reached the goal.")
         msg_box.exec_()
         self.simulator.save_results()
+        self.recorder.stop()
         self.deleteLater()
 
     def show_collision_dialogue(self):
