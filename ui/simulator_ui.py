@@ -18,7 +18,7 @@ import threading
 
 class SimulatorUI(QMainWindow):
 
-    def __init__(self, width, height, filename=None, player_id=None, parent=None):
+    def __init__(self, width, height, filename=None, player_id=None, recording=False, parent=None):
         super(SimulatorUI, self).__init__(parent)
 
         # TODO: Clean this mess
@@ -174,26 +174,16 @@ class SimulatorUI(QMainWindow):
         ######################
         # Set up webcam feed #
         ######################
-        # print("Available cameras: {}".format(QCameraInfo.availableCameras()))
-        # self.camera = QCamera(QCameraInfo.availableCameras()[0])
-        # self.viewfinder = QCameraViewfinder(self)
-        # self.camera.setViewfinder(self.viewfinder)
-        # self.viewfinder.show()
-        # self.camera_dock_widget = QDockWidget("Camera Feed", self)
-        # self.camera_dock_widget.setWidget(self.viewfinder)
-        # self.addDockWidget(Qt.LeftDockWidgetArea, self.camera_dock_widget)
-        # self.camera.start()
-        # self.recorder = QMediaRecorder(self.camera)
-        # self.recorder.setOutputLocation(QUrl.fromLocalFile("results/{}/recording.mp4".format(player_id)))
-        # self.camera.setCaptureMode(QCamera.CaptureVideo)
-        self.video_capture = cv2.VideoCapture(-1)
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        frame_width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
-        frame_height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.video_output = cv2.VideoWriter('results/{}/recording.avi'.format(player_id), fourcc, 20.0, (640,
-                                                                                                         480))
-        self.video_thread = threading.Thread(target=self.record_video)
-        self.video_thread.start()
+        self.recording_enabled = recording
+        if self.recording_enabled:
+            self.video_capture = cv2.VideoCapture(-1)
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')
+            frame_width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+            frame_height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            self.video_output = cv2.VideoWriter('results/{}/recording.avi'.format(player_id), fourcc, 20.0, (640,
+                                                                                                             480))
+            self.video_thread = threading.Thread(target=self.record_video)
+            self.video_thread.start()
 
         #######################
         # Edict subscriptions #
@@ -219,9 +209,11 @@ class SimulatorUI(QMainWindow):
         msg_box.setFont(LARGE_FONT)
         msg_box.setText("Congratulations! You have reached the goal.")
         msg_box.exec_()
-        self.video_output.release()
-        self.video_thread.join(1.0)
-        self.video_capture.release()
+        if self.recording_enabled:
+            self.video_output.release()
+            self.video_thread.join(1.0)
+            self.video_capture.release()
+
         self.simulator.save_results()
         self.deleteLater()
 
