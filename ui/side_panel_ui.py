@@ -52,6 +52,9 @@ class ButtonClusterUI(QWidget):
 
         self.setLayout(self.grid_layout)
 
+        self.setFixedWidth(200)
+        self.setFixedHeight(200)
+
         self.button_group.buttonClicked.connect(self.set_button_pressed)
 
         self.current_direction = None

@@ -221,7 +221,7 @@ class SimulatorUI(QMainWindow):
         msg_box = QMessageBox()
         msg_box.setWindowTitle("Collision!")
         msg_box.setFont(LARGE_FONT)
-        msg_box.setText("You have collided with another officer and it was <b>your fault</b>.\nLose 20 " + u"\U000026FD" + ".")
+        msg_box.setText("You have collided with another officer and it was <b>your fault</b>.<br>Lose 5 " + u"\U000026FD" + ".")
         msg_box.exec_()
 
     def rewind_simulation(self):
