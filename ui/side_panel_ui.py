@@ -146,7 +146,7 @@ class SidePanelUI(QWidget):
         self.time = self.time.addSecs(1)
         self.timer_label.setText("Time: " + self.time.toString("mm:ss"))
         self.score_label.setStyleSheet("QLabel {color : black}")
-        if self.time.second() % 5 == 0:
+        if self.time.second() % 10 == 0:
             self.time_penalty += 1
             Broadcaster().publish("/score_changed", self.current_score)
             Broadcaster().publish("/time_penalty")

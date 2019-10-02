@@ -42,7 +42,7 @@ class Agent:
 
         self.__culture = None
 
-        self.score = 100
+        self.score = 50
         self.time_penalty = 0
         self.__human_controlled = False
         self.__current_direction = None
@@ -79,7 +79,7 @@ class Agent:
         self.__human_reply = reply
 
     def score_collision(self):
-        self.change_score(-20)
+        self.change_score(-5)
 
     def change_score(self, delta = -1):
         self.score += delta
