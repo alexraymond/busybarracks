@@ -209,7 +209,7 @@ class GridUI(QGraphicsView):
         self.keep_paths_on = False
         self.current_selection = None
         self.human_goal = None
-        self.path_length = 10
+        self.path_length = 100
         for i in range(x_cells):
             self.cells[i] = {}
             for j in range(y_cells):

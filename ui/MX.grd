@@ -60,12 +60,12 @@ PROPERTIES
 8 Task Importance VALUE 3
 8 Military Rank VALUE 2
 8 Special Ops VALUE Yes
-9 Tasked Status VALUE Tasked
-9 Task Importance VALUE 6
-9 Military Rank VALUE 2
-9 Special Ops VALUE No
-10 Tasked Status VALUE At Ease
+10 Tasked Status VALUE Tasked
 10 Task Importance VALUE 6
-10 Military Rank VALUE 3
-10 Special Ops VALUE Yes
+10 Military Rank VALUE 2
+10 Special Ops VALUE No
+9 Tasked Status VALUE At Ease
+9 Task Importance VALUE 6
+9 Military Rank VALUE 3
+9 Special Ops VALUE Yes
 END

@@ -612,6 +612,9 @@ class Agent:
             cpu_agent_id = sender_id if sender_id != HUMAN else self.agent_id()
             Broadcaster().publish("/highlighted_agent", cpu_agent_id)
             if received_locution.content_type() == ContentType.MULTIPLE_ARGUMENTS and Agent.EXPLAINABLE:
+                if cpu_agent_id == sender_id and self.agent_id() != HUMAN:
+                    #  Should not care about cpu x cpu discussions
+                    return
                 print("\n########## VICTORIOUS ARGUMENTS ###########\n")
                 AF = self.__culture.argumentation_framework
                 victorious_arguments = list(self.__arguments_used_this_round)
@@ -629,7 +632,7 @@ class Agent:
                     print(self.__culture.argumentation_framework.argument(argument_id).descriptive_text().format(winner, loser))
 
                 if len(failed_arguments) > 0:
-                    conjunctions = ["Although", "Even though"]
+                    conjunctions = ["Although", "Even though", "Although"]
                     failed_arguments = sorted(failed_arguments)
                     failed_argument_text = AF.argument(failed_arguments[-1]).descriptive_text().format(loser, winner)
                     hint = conjunctions[np.random.randint(len(conjunctions))] + " " + failed_argument_text + ", "
