@@ -19,7 +19,7 @@ COMMUNICATION = True
 
 #FIXME: Agents need to be able to re-inform their new paths after rerouting.
 
-class Simulator:
+class World:
     def __init__(self, w, h, filename, player_id):
         self.__world_model = Grid3D(w, h)
         self.__agents = {}
