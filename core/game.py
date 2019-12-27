@@ -39,7 +39,7 @@ class Game():
 		#######################
 
 		Broadcaster().subscribe("/property_label/raw", self.set_property_label)
-		Broadcaster().subscribe("/score_changed", self.set_score)
+		Broadcaster().subscribe("/score_changed", self.set_current_score)
 		Broadcaster().subscribe("/first_move", self.start_timer)
 		Broadcaster().subscribe("/new_hint", self.set_hint_label)
 
@@ -49,7 +49,7 @@ class Game():
 		Broadcaster().subscribe("/game_over", self.show_game_over)
 		# Broadcaster().subscribe("/model_updated", self.update_agents)
 
-	def get_reward(self):
+	def get_score(self):
 		return self.current_score - self.time_penalty
 
 	def get_goal(self):
@@ -94,9 +94,8 @@ class Game():
 			Broadcaster().publish("/score_changed", self.current_score)
 			Broadcaster().publish("/time_penalty")
 
-	def set_score(self, score):
+	def set_current_score(self, score):
 		self.current_score = score
-		print("Score: " + str(score))
 
 	def show_game_over(self):
 		self.is_over = True

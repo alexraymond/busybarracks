@@ -14,6 +14,7 @@ if len(dimensions) == 2:
 	max_x, max_y = map(int,dimensions)
 	actions_set = list(Game.direction_char_dict.keys())
 	game = Game(max_x, max_y, filename, player_id)
+	last_score = game.get_score()
 	while not game.is_over:
 		game.do_agent_action(random.choice(actions_set))
 		print('State:')
@@ -21,5 +22,6 @@ if len(dimensions) == 2:
 		print('	- Goal:', game.get_goal())
 		print('	- Property:', game.property_label)
 		print('	- Hint:', game.hint_label)
-		print('Reward:', game.get_reward())
+		print('Reward:', game.get_score()-last_score)
 		print('Agents in Range:', game.simulator.get_agents_in_range())
+		last_score = game.get_score()
