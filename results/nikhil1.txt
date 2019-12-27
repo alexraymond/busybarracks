@@ -1,7 +1,0 @@
-Player id: nikhil1
-Culture: H
-Mode: X
-Score: 67
-Collisions: 0
-Time elapsed: 164.90122866630554
-Time penalty: 32

@@ -1,6 +1,0 @@
-Player id: jenny2
-Culture: M
-Mode: X
-Score: 38
-Collisions: 1
-Time elapsed: 210.10566353797913
