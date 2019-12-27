@@ -1,11 +1,7 @@
-import sys
-sys.path.append('./core')
-
 import time
 from world import World
 from interactive_argument import InteractiveArgument
 from edict import Broadcaster
-from grid2d import LOCAL_OBSTACLE
 from utils import *
 
 class Game():
@@ -17,7 +13,7 @@ class Game():
 		MoveDirection.WAIT: 'W',
 	}
 
-	def __init__(self, width, height, num_agents, num_obstacles, filename=None, player_id=None, parent=None):
+	def __init__(self, width, height, filename=None, player_id=None):
 		self.player_id = player_id
 		self.simulator = World(width, height, filename, player_id)
 
@@ -31,20 +27,18 @@ class Game():
 		# #######################################
 		self.step_slider = 0
 		self.step_slider_max = self.simulator.simulation_size()
-		self.num_agents = num_agents
-		self.num_obstacles = num_obstacles
 
 		self.update_step(0)
 
 		self.start_timer()
 		self.hint_label = ''
-        self.property_label = ''
+		self.property_label = ''
 
 		#######################
 		# Edict subscriptions #
 		#######################
 
-        Broadcaster().subscribe("/property_label/raw", self.set_property_label)
+		Broadcaster().subscribe("/property_label/raw", self.set_property_label)
 		Broadcaster().subscribe("/score_changed", self.set_score)
 		Broadcaster().subscribe("/first_move", self.start_timer)
 		Broadcaster().subscribe("/new_hint", self.set_hint_label)
@@ -58,15 +52,21 @@ class Game():
 	def get_reward(self):
 		return self.current_score - self.time_penalty
 
+	def get_goal(self):
+		return self.simulator.get_goal()
+
 	def do_agent_action(self, current_direction):
-		if current_direction not in direction_char_dict:
+		if current_direction not in self.direction_char_dict:
 			return
 		self.current_direction = current_direction
-		direction_char = direction_char_dict[current_direction]
+		direction_char = self.direction_char_dict[current_direction]
 		Broadcaster().publish("/direction_chosen", self.current_direction)
 		Broadcaster().publish("/new_event", direction_char)
 		Broadcaster().publish("/advance_simulation")
 		print("Action performed!")
+		#print('Agents in range: ',self.simulator.get_agents_in_range())
+		if len(self.simulator.get_agents_in_range()) < 2:
+			self.hint_label = ''
 
 	def get_cell_information(self, x, y):
 		Broadcaster().publish("/cell_pressed", (x,y))
@@ -75,11 +75,12 @@ class Game():
 		prefix = "Hint (Agent {}): ".format(cpu_agent_id)
 		self.hint_label = prefix + text
 
-    def set_property_label(self, text):
-        print("Setting property label")
-        self.property_label = text
+	def set_property_label(self, text):
+		print("Setting property label")
+		self.property_label = text
 
 	def start_timer(self):
+		self.is_over = False
 		self.time = 0
 		self.timer = 1000
 		self.current_score = 100
@@ -97,8 +98,9 @@ class Game():
 		print("Score: " + str(score))
 
 	def show_game_over(self):
+		self.is_over = True
 		self.simulator.save_results()
-        print("Congratulations! You have reached the goal.")
+		print("Congratulations! You have reached the goal.")
 
 	def rewind_simulation(self):
 		self.step_slider = 0
@@ -135,20 +137,8 @@ class Game():
 			self.update_step(self.step_slider + 1)
 			self.reset_human_direction()  # TODO: Remove hideous workaround
 
-	def add_random_agent(self):
-		self.simulator.create_random_agents(self.num_agents)
-		self.update_agents()
-
-	def add_random_obstacles(self):
-		self.simulator.create_random_obstacles(self.num_obstacles)
-		self.update_agents()
-
-	def assign_random_goals(self):
-		self.simulator.assign_random_goals()
-		self.update_agents()
-
-    def show_collision_dialogue(self):
-        print("You have collided with another officer and it was your fault. Lose 5 points.")
+	def show_collision_dialogue(self):
+		print("You have collided with another officer and it was your fault. Lose 5 points.")
 
 	def update_agents(self):
 		step = self.current_step()

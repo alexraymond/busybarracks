@@ -3,8 +3,6 @@ import numpy as np
 import collections
 import copy
 
-from systemd.journal import send
-
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE, LOCAL_OBSTACLE
 from edict import Broadcaster
 from utils import *
@@ -655,13 +653,7 @@ class Agent:
                         hint = ' '.join(split_words)
                     else:
                         hint = "There are no arguments that challenge " + winner + " right of way."
-
-
                 Broadcaster().publish("/new_hint", cpu_agent_id, hint)
-
-
-
-
             Broadcaster().publish("/model_updated")
 
     def reroute_avoiding(self):

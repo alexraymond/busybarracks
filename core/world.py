@@ -40,7 +40,9 @@ class World:
             self.load_grid(filename)
             self.load_culture(filename)
 
-        os.mkdir("results/{}/".format(player_id))
+        self.result_path = os.path.join("results",player_id)
+        if not os.path.isdir(self.result_path):
+            os.mkdir(self.result_path)
 
         Broadcaster().subscribe("/log/raw", self.print_log)
         Broadcaster().subscribe("/human_collision", self.increment_collision_counter)
@@ -76,7 +78,7 @@ class World:
         time_elapsed = end_time - self.__start_time
         human_score = self.agent(HUMAN).score
         time_penalty = self.agent(HUMAN).time_penalty
-        file = open("results/{}/results.txt".format(self.__player_id), "w")
+        file = open(os.path.join(self.result_path,"results.txt"), "w")
         culture = '?'
         if type(self.__culture) == EasyCulture:
             culture = 'E'
@@ -259,6 +261,12 @@ class World:
 
     def grid_at(self, t):
         return self.__world_model.raw_grid_at(t)
+
+    def get_goal(self):
+        return self.agent(HUMAN).goal()
+
+    def get_agents_in_range(self):
+        return self.agent(HUMAN).find_agents_in_range()
 
     def empty_cells_at(self, t):
         num_cells = self.__width * self.__height
