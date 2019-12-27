@@ -40,6 +40,8 @@ class World:
             self.load_grid(filename)
             self.load_culture(filename)
 
+        if not os.path.isdir("results"):
+            os.mkdir("results")
         self.result_path = os.path.join("results",player_id)
         if not os.path.isdir(self.result_path):
             os.mkdir(self.result_path)

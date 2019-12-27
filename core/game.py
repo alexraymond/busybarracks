@@ -67,6 +67,7 @@ class Game():
 		#print('Agents in range: ',self.simulator.get_agents_in_range())
 		if len(self.simulator.get_agents_in_range()) < 2:
 			self.hint_label = ''
+			self.property_label = ''
 
 	def get_cell_information(self, x, y):
 		Broadcaster().publish("/cell_pressed", (x,y))
