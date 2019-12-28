@@ -4,7 +4,7 @@ import tensorflow as tf
 options_built = False
 def build():
 	tf.app.flags.DEFINE_integer("max_timestep", 2**30, "Max training time steps.")
-	tf.app.flags.DEFINE_integer("timesteps_before_starting_training", 2**10, "Number of initialization steps.")
+	tf.app.flags.DEFINE_integer("timesteps_before_starting_training", 2**5, "Number of initialization steps.")
 # Environment
 	# tf.app.flags.DEFINE_string("env_type", "car_controller", "environment types: rogue, car_controller, sentipolc, or environments from https://gym.openai.com/envs")
 	# tf.app.flags.DEFINE_string("env_type", "MontezumaRevengeDeterministic-v4", "Environment types: rogue, car_controller, sentipolc, MultipleProteinAlignment, or environments from https://gym.openai.com/envs")
@@ -16,7 +16,7 @@ def build():
 	tf.app.flags.DEFINE_string("parameters_type", "float32", "The type used to represent parameters: bfloat16, float32, float64")
 	tf.app.flags.DEFINE_string("algorithm", "AC", "algorithms: AC, ACER")
 	tf.app.flags.DEFINE_string("network_configuration", "OpenAISmall", "neural network configurations: Base, Towers, HybridTowers, SA, OpenAISmall, OpenAILarge, Impala")
-	tf.app.flags.DEFINE_boolean("network_has_internal_state", False, "Whether the network has an internal state to keep updated (eg. RNNs state).")
+	tf.app.flags.DEFINE_boolean("network_has_internal_state", True, "Whether the network has an internal state to keep updated (eg. RNNs state).")
 	tf.app.flags.DEFINE_string("optimizer", "Adam", "gradient optimizer: PowerSign, AddSign, ElasticAverage, LazyAdam, Nadam, Adadelta, AdagradDA, Adagrad, Adam, Ftrl, GradientDescent, Momentum, ProximalAdagrad, ProximalGradientDescent, RMSProp") # default is Adam, for vanilla A3C is RMSProp
 	# In information theory, the cross entropy between two probability distributions p and q over the same underlying set of events measures the average number of bits needed to identify an event drawn from the set.
 	tf.app.flags.DEFINE_boolean("only_non_negative_entropy", True, "Cross-entropy and entropy are used for policy loss and if this flag is true, then entropy=max(0,entropy). If cross-entropy measures the average number of bits needed to identify an event, then it cannot be negative.")
