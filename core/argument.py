@@ -28,7 +28,7 @@ class Argument:
         elif type(attacked) is int:
             attacked_id = attacked
         else:
-            print("Argument::attacks: Invalid type for argument!")
+            #print("Argument::attacks: Invalid type for argument!")
             return
         self.__framework.add_attack(self.__arg_id, attacked_id)
 

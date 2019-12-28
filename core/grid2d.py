@@ -41,7 +41,7 @@ class Grid2D:
         :return: List of neighbours. False if arguments are invalid..
         """
         if not self.within_bounds(coord):
-            print("Grid2D::neighbours_of: Position out of bounds.")
+            #print("Grid2D::neighbours_of: Position out of bounds.")
             return None
         x, y = coord
         neighbours = []
@@ -56,13 +56,13 @@ class Grid2D:
                     if i == j == 0: continue
                     if self.within_bounds((x + i, y + j)): neighbours.append((x + i, y + j))
         else:
-            print("Grid2D::neighbours_of: This neighbourhood type is not supported.")
+            #print("Grid2D::neighbours_of: This neighbourhood type is not supported.")
             return None
         return neighbours
 
     def is_cell_empty(self, coord):
         if not self.within_bounds(coord):
-            print("Grid2D::neighbours_of: Position out of bounds.")
+            #print("Grid2D::neighbours_of: Position out of bounds.")
             return False
         x, y = coord
         return self.cells[x][y] == EMPTY
@@ -76,10 +76,10 @@ class Grid2D:
         """
         x, y = coord
         if not self.within_bounds(coord):
-            print("Grid2D::add_obstacle: Position out of bounds.")
+            #print("Grid2D::add_obstacle: Position out of bounds.")
             return False
         if self.cells[x][y] != EMPTY:
-            print("Grid2D::add_obstacle: Trying to add obstacle to non-empty cell.")
+            #print("Grid2D::add_obstacle: Trying to add obstacle to non-empty cell.")
             return False
         self.cells[x][y] = type
         return True
@@ -91,14 +91,14 @@ class Grid2D:
         :returns True if successful. False if out of bounds or obstacle not found.
         """
         if not self.within_bounds(coord):
-            print("Grid2D::remove_obstacle: Position out of bounds.")
+            #print("Grid2D::remove_obstacle: Position out of bounds.")
             return False
         x, y = coord
         if Grid2D.is_obstacle(self.cells[x][y]):
             self.cells[x][y] = EMPTY
             return True
 
-        print("Grid2D::remove_obstacle: There is no obstacle to remove at this cell.")
+        #print("Grid2D::remove_obstacle: There is no obstacle to remove at this cell.")
         return False
 
     def add_agent(self, agent_id, coord):
@@ -110,7 +110,7 @@ class Grid2D:
         :returns True if operation successful. False if out of bounds or in conflict.
         """
         if not self.within_bounds(coord):
-            print("Grid2D::add_agent: Position out of bounds.")
+            ##print("Grid2D::add_agent: Position out of bounds.")
             return False
         x, y = coord
         if self.cells[x][y] == EMPTY:
@@ -118,12 +118,12 @@ class Grid2D:
             self.agent_positions[agent_id] = coord
             return True
 
-        print("Grid2D::add_agent: Trying to add agent to non-empty cell.")
+        #print("Grid2D::add_agent: Trying to add agent to non-empty cell.")
         return False
 
     def remove_agent(self, coord):
         if not self.within_bounds(coord):
-            print("Grid2D::remove_agent: Position out of bounds.")
+            #print("Grid2D::remove_agent: Position out of bounds.")
             return False
         x, y = coord
         if self.cells[x][y] > 0:
@@ -132,13 +132,13 @@ class Grid2D:
             del self.agent_positions[agent_id]
             return True
 
-        print("Grid2D::remove_agent: Cell does not contain an agent.")
+        #print("Grid2D::remove_agent: Cell does not contain an agent.")
         return False
 
     def move_agent(self, agent_id, dest_coord):
         current_coord = self.agent_positions.get(agent_id, False)
         if current_coord is False:
-            print("Grid2D::move_agent: Agent not found!")
+            #print("Grid2D::move_agent: Agent not found!")
             return False
 
         if type(current_coord) is type(dest_coord):

@@ -4,7 +4,7 @@ import copy
 import grid2d
 from grid2d import Grid2D, GLOBAL_OBSTACLE
 from edict import Broadcaster
-from utils import *
+from game_utils import *
 
 
 class Grid3D:
@@ -46,7 +46,7 @@ class Grid3D:
         :returns Grid2D instance if found. False if not found.
         """
         if t > len(self.__steps) or t < 0:
-            print("Grid3D::grid_at: Time step {0} out of bounds.".format(t))
+            #print("Grid3D::grid_at: Time step {0} out of bounds.".format(t))
             return False
         return self.__steps[t]
 
@@ -67,16 +67,16 @@ class Grid3D:
         """
         time_step = 0
         if self.is_locked_for_edits:
-            print("Grid3D::add_agent: Cannot add agent while grid is locked for edits.")
+            #print("Grid3D::add_agent: Cannot add agent while grid is locked for edits.")
             return False
         if agent_id < 1:
-            print("Grid3D::add_agent: Invalid agent ID.")
+            #print("Grid3D::add_agent: Invalid agent ID.")
             return False
         if not self.within_bounds(coord_at_t0):
-            print("Grid3D::add_agent: Coordinate {} is out of bounds.".format(coord_at_t0))
+            #print("Grid3D::add_agent: Coordinate {} is out of bounds.".format(coord_at_t0))
             return False
         if self.__agent_positions.get(agent_id, None):
-            print("Grid3D::add_agent: Agent {0} already added.".format(agent_id))
+            #print("Grid3D::add_agent: Agent {0} already added.".format(agent_id))
             return False
         success = self.__steps[time_step].add_agent(agent_id, coord_at_t0)
         if success:
@@ -87,13 +87,13 @@ class Grid3D:
     def remove_agent(self, agent_id, coord_at_t0):
         time_step = 0
         if self.is_locked_for_edits:
-            print("Grid3D::remove_agent: Cannot remove agent while grid is locked for edits.")
+            #print("Grid3D::remove_agent: Cannot remove agent while grid is locked for edits.")
             return False
         if agent_id < 1:
-            print("Grid3D::remove_agent: Invalid agent ID.")
+            #print("Grid3D::remove_agent: Invalid agent ID.")
             return False
         if not self.within_bounds(coord_at_t0):
-            print("Grid3D::remove_agent: Coordinate {} is out of bounds.".format(coord_at_t0))
+            #print("Grid3D::remove_agent: Coordinate {} is out of bounds.".format(coord_at_t0))
             return False
         if self.__agent_positions.get(agent_id, None):
             del self.__agent_positions[agent_id]
@@ -110,11 +110,11 @@ class Grid3D:
         """
         agent_found = self.__agent_positions.get(agent_id, None)
         if agent_found is None:
-            print("Grid3D::find_agent: Agent {0} not found.".format(agent_id))
+            #print("Grid3D::find_agent: Agent {0} not found.".format(agent_id))
             return False
         coord = agent_found.get(time_step, None)
         if coord is None:
-            print("Grid3D::find_agent: Agent {0} is not present at time step {1}".format(agent_id, time_step))
+            #print("Grid3D::find_agent: Agent {0} is not present at time step {1}".format(agent_id, time_step))
             return False
         return coord
 
@@ -125,10 +125,10 @@ class Grid3D:
         :returns True if successful.
         """
         if self.is_locked_for_edits:
-            print("Grid3D::add_obstacle: Cannot add obstacle while grid is locked for edits.")
+            #print("Grid3D::add_obstacle: Cannot add obstacle while grid is locked for edits.")
             return False
         if not self.within_bounds(coord):
-            print("Grid3D::add_obstacle: Coordinate {} is out of bounds.".format(coord))
+            #print("Grid3D::add_obstacle: Coordinate {} is out of bounds.".format(coord))
             return False
         for i in range(len(self.__steps)):
             if self.__steps[i].add_obstacle(coord, type) is not True:
@@ -137,10 +137,10 @@ class Grid3D:
 
     def remove_obstacle(self, coord):
         if self.is_locked_for_edits:
-            print("Grid3D::remove_obstacle: Cannot remove obstacle while grid is locked for edits.")
+            #print("Grid3D::remove_obstacle: Cannot remove obstacle while grid is locked for edits.")
             return False
         if not self.within_bounds(coord):
-            print("Grid3D::remove_obstacle: Coordinate {} is out of bounds.".format(coord))
+            #print("Grid3D::remove_obstacle: Coordinate {} is out of bounds.".format(coord))
             return False
         for i in range(len(self.__steps)):
             if self.__steps[i].remove_obstacle(coord) is not True:
@@ -160,13 +160,13 @@ class Grid3D:
         # Validating move and performing checks.#
         #########################################
         if not self.is_locked_for_edits:
-            print("Grid3D::attempt_move: Grid needs to be locked to attempt move.")
+            #print("Grid3D::attempt_move: Grid needs to be locked to attempt move.")
             return False
         if len(moves) < len(self.__agent_positions):
-            print("Grid3D::attempt_move: There are fewer moves than registered agents.")
+            #print("Grid3D::attempt_move: There are fewer moves than registered agents.")
             return False
         if len(moves) > len(self.__agent_positions):
-            print("Grid3D::attempt_move: There are more moves than registered agents.")
+            #print("Grid3D::attempt_move: There are more moves than registered agents.")
             return False
         next_time_step = self.__latest_time_step + 1
         crashing_agents = []
@@ -203,13 +203,13 @@ class Grid3D:
 
 
         if len(crashing_agents) > 0:
-            print("Grid3D::attempt_move: Agent(s) {0} will collide with obstacles.".format(crashing_agents))
+            #print("Grid3D::attempt_move: Agent(s) {0} will collide with obstacles.".format(crashing_agents))
             return False
         if len(out_of_bounds) > 0:
-            print("Grid3D::attempt_move: Agent(s) {0} are heading out of bounds.".format(out_of_bounds))
+            #print("Grid3D::attempt_move: Agent(s) {0} are heading out of bounds.".format(out_of_bounds))
             return False
         if len(conflicts) > 0:
-            print("Grid3D::attempt_move: Conflicts found between agents {0}.".format(conflicts))
+            #print("Grid3D::attempt_move: Conflicts found between agents {0}.".format(conflicts))
             if 1 in conflicts:
                 Broadcaster().publish("/human_collision")
                 Broadcaster().publish("/new_event", "COLLISION")

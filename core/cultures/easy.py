@@ -1,6 +1,6 @@
 from culture import Culture
 from argument import Argument, ArgumentationFramework
-from agent import Agent
+from game_agent import Agent
 from enum import Enum
 import numpy as np
 

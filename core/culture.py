@@ -1,5 +1,5 @@
 from argument import ArgumentationFramework
-from agent import Agent
+from game_agent import Agent
 
 class Culture:
     def __init__(self):

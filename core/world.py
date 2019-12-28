@@ -4,8 +4,8 @@ import os
 from pydoc import locate
 from grid3d import Grid3D
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE
-from agent import Agent
-from utils import *
+from game_agent import Agent
+from game_utils import *
 from edict import Broadcaster
 from cultures.easy import EasyCulture
 from cultures.medium import MediumCulture
@@ -20,7 +20,7 @@ COMMUNICATION = True
 #FIXME: Agents need to be able to re-inform their new paths after rerouting.
 
 class World:
-    def __init__(self, w, h, filename, player_id):
+    def __init__(self, w, h, filename, player_id=None):
         self.__world_model = Grid3D(w, h)
         self.__agents = {}
         self.__obstacles = []
@@ -40,11 +40,12 @@ class World:
             self.load_grid(filename)
             self.load_culture(filename)
 
-        if not os.path.isdir("results"):
-            os.mkdir("results")
-        self.result_path = os.path.join("results",player_id)
-        if not os.path.isdir(self.result_path):
-            os.mkdir(self.result_path)
+        if self.__player_id is not None:
+            if not os.path.isdir("results"):
+                os.mkdir("results")
+            self.result_path = os.path.join("results",self.__player_id)
+            if not os.path.isdir(self.result_path):
+                os.mkdir(self.result_path)
 
         Broadcaster().subscribe("/log/raw", self.print_log)
         Broadcaster().subscribe("/human_collision", self.increment_collision_counter)
@@ -53,18 +54,15 @@ class World:
         Broadcaster().subscribe("/highlighted_agent", self.send_agent_stats)
 
     def send_agent_stats(self, agent_id):
-        text = "<big> <font color=\"red\">You</font> vs. <font color=\"green\">Agent {}</font></big><br>".format(agent_id)
+        text = "You vs Agent {}".format(agent_id) + '\n'
         human_agent = self.agent(HUMAN)
         cpu_agent = self.agent(agent_id)
-        for property in human_agent.culture_properties():
-            human_property_value = human_agent.__dict__.get(property, None)
-            human_text = "<font color=\"red\">" + str(human_property_value) + "</font>"
-            cpu_property_value = cpu_agent.__dict__.get(property, None)
-            cpu_text = "<font color=\"green\">" + str(cpu_property_value) + "</font>"
-            line = str(property) + ":\t" + human_text + " vs. " + cpu_text + "<br>"
-            text += line
+        for prop in human_agent.culture_properties():
+            human_property_value = human_agent.__dict__.get(prop, None)
+            cpu_property_value = cpu_agent.__dict__.get(prop, None)
+            line = str(prop) + ": " + str(human_property_value) + " vs " + str(cpu_property_value)
+            text += line + "\n"
         Broadcaster().publish("/property_label/raw", text)
-
 
     def add_time_in_popup(self, time):
         self.__time_reading_popups += time
@@ -76,6 +74,8 @@ class World:
         self.__num_collisions += 1
 
     def save_results(self):
+        if self.__player_id is None:
+            return
         end_time = time.time()
         time_elapsed = end_time - self.__start_time
         human_score = self.agent(HUMAN).score
@@ -104,7 +104,8 @@ class World:
         file.close()
 
     def print_log(self, log):
-        print(log)
+        #print(log)
+        pass
 
     def agent(self, agent_id):
         return self.__agents.get(agent_id, None)
@@ -131,7 +132,7 @@ class World:
         num_cells = self.__width * self.__height
 
         if num_obstacles > self.empty_cells_at(self.__current_time_step):
-            print("Simulator::create_random_obstacles: There are no sufficient empty cells.")
+            #print("Simulator::create_random_obstacles: There are no sufficient empty cells.")
             return
 
         obstacles_placed = 0
@@ -141,7 +142,7 @@ class World:
                 self.__obstacles.append(coord)
                 self.__world_model.add_obstacle(coord)
                 obstacles_placed += 1
-        print(self.__world_model.raw_grid_at(0).transpose())
+        #print(self.__world_model.raw_grid_at(0).transpose())
 
     def create_random_agents(self, num_agents):
         """
@@ -150,7 +151,7 @@ class World:
         num_cells = self.__width * self.__height
 
         if num_agents > self.empty_cells_at(self.__current_time_step):
-            print("Simulator::create_random_agents: There are no sufficient empty cells.")
+            #print("Simulator::create_random_agents: There are no sufficient empty cells.")
             return
 
         agents_placed = 0
@@ -159,7 +160,7 @@ class World:
             if self.is_cell_empty(coord):
                 self.add_agent(coord)
                 agents_placed += 1
-        print(self.__world_model.raw_grid_at(0).transpose())
+        #print(self.__world_model.raw_grid_at(0).transpose())
 
     def assign_random_goals(self):
         """
@@ -176,7 +177,7 @@ class World:
         if self.is_cell_empty(goal_coord):
             self.__agents[agent_id].assign_goal(goal_coord)
             return
-        print("Simulator::assign_goal: Trying to assign goal to non-empty cell!")
+        #print("Simulator::assign_goal: Trying to assign goal to non-empty cell!")
 
     def update_agents(self, t):
         """
@@ -230,7 +231,7 @@ class World:
             self.add_any_agent(coord)
             return
         if agent_id in self.__agents:
-            print("Simulator::add_agent: Agent already exists!")
+            #print("Simulator::add_agent: Agent already exists!")
             return
         success = self.__world_model.add_agent(agent_id, coord)
         if success:
@@ -294,12 +295,12 @@ class World:
                 still_agents += 1
                 continue
             moves[agent.agent_id()] = agent.latest_plan()[1][POS]
-        if still_agents == len(self.__agents):
-            print("Agents have reached a standstill.")
+        #if still_agents == len(self.__agents):
+            #print("Agents have reached a standstill.")
         # Propose move to model.
         moves_str = "Proposed moves: {}".format(moves)
         # Broadcaster().publish("/log/raw", moves_str)
-        print(moves_str)
+        #print(moves_str)
         result = self.__world_model.attempt_move(moves)
         if result:
             self.__current_time_step += 1
@@ -314,19 +315,19 @@ class World:
         self.__agents[destination_id].receive_locution(source_id, locution)
 
     def load_grid(self, filename):
-        print("Loading grid!")
+        #print("Loading grid!")
         file = open(filename, "r")
         grid = self.__world_model.grid_at(0)
         file.readline()  # Skip dimensions line.
         for i in range(grid.width):
             values = file.readline().split()
             if len(values) != grid.height:
-                print("Simulator::load_grid: Ill-formed file! Grid might be corrupted.")
+                #print("Simulator::load_grid: Ill-formed file! Grid might be corrupted.")
                 return
             for j in range(len(values)):
                 cell_value = int(values[j])
                 if cell_value > 0:
-                    print("Adding agent {}".format(cell_value))
+                    #print("Adding agent {}".format(cell_value))
                     self.add_agent((i,j), cell_value)
                 elif cell_value < 0:
                     self.add_obstacle((i,j), cell_value) # TODO: Fix signature mismatch of add_obstacle and add_agent
@@ -341,7 +342,7 @@ class World:
         file.close()
 
     def load_culture(self, filename):
-        print("Loading culture!")
+        #print("Loading culture!")
         file = open(filename, "r")
         line = file.readline()
         while line:
@@ -354,7 +355,7 @@ class World:
                 elif culture == 'H':
                     self.__culture = HardCulture()
                 else:
-                    print("Simulator::load_culture: No culture chosen!")
+                    #print("Simulator::load_culture: No culture chosen!")
                     return
                 for agent in self.__agents.values():
                     agent.set_culture(self.__culture)
@@ -365,7 +366,7 @@ class World:
                 elif mode == 'N':
                     Agent.EXPLAINABLE = False
                 else:
-                    print("Simulator::load_culture: No mode defined!")
+                    #print("Simulator::load_culture: No mode defined!")
                     return
             elif line.split()[0] == "PROPERTIES":
                 property_tuple = file.readline().split()

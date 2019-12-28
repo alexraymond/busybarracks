@@ -5,7 +5,7 @@ import copy
 
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE, LOCAL_OBSTACLE
 from edict import Broadcaster
-from utils import *
+from game_utils import *
 from interactive_argument import InteractiveArgument
 from locution import *
 
@@ -119,14 +119,14 @@ class Agent:
     def set_culture(self, culture):
         self.__culture = culture
         if self.culture_properties() is None:
-            print("Agent::set_culture: Culture {} has no properties.".format(culture.name))
+            #print("Agent::set_culture: Culture {} has no properties.".format(culture.name))
             return
         for property, default_value in self.culture_properties().items():
             self.__setattr__(property, default_value)
 
     def assign_property_value(self, property, value):
         if hasattr(self, property) is False:
-            print("Agent::assign_property_value: Property {} not found within agent.".format(property))
+            #print("Agent::assign_property_value: Property {} not found within agent.".format(property))
             return
         self.__setattr__(property, value)
 
@@ -156,7 +156,7 @@ class Agent:
         :return: False if information is insufficient. True if successful.
         """
         if self.__current_pos is None:
-            print("Agent::build_partial_world_model: Current position not defined.")
+            #print("Agent::build_partial_world_model: Current position not defined.")
             return False
         self.__latest_world_model = Grid2D(self.__grid_width, self.__grid_height)
         for coord, cell in self.__known_cells.items():
@@ -164,7 +164,7 @@ class Agent:
                 self.__latest_world_model.add_obstacle(coord, cell)
             elif cell != EMPTY:
                 self.__latest_world_model.add_agent(cell, coord)
-        # print("\nVisible world for agent {0} ({3}) (radius {2}): \n{1}.".format(
+        # #print("\nVisible world for agent {0} ({3}) (radius {2}): \n{1}.".format(
         #     self.__agent_id, self.__latest_world_model.cells.transpose(), self.__visibility_radius, self.__current_pos))
         return True
 
@@ -207,8 +207,8 @@ class Agent:
             if overwrite or (len(self.__previous_plans) <= 1 or time_step not in self.__previous_plans):
                 self.__previous_plans[time_step] = copy.deepcopy(self.__plan)
                 self.__previous_optimal_plans[time_step] = copy.deepcopy(self.__optimal_plan)
-        # print("Path from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.__plan))
-        # print("Turns from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.next_waypoints()))
+        # #print("Path from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.__plan))
+        # #print("Turns from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.next_waypoints()))
 
     def find_path_BFS(self, origin, goal, ignore_agents=True):
         """
@@ -251,7 +251,7 @@ class Agent:
             path.reverse()
             return path
 
-        print("Agent::find_path_BFS: Agent {} could not reach its goal.".format(self.__agent_id))
+        #print("Agent::find_path_BFS: Agent {} could not reach its goal.".format(self.__agent_id))
         return None
 
     def find_path_3D_search(self, origin, goal, initial_time_step=None, concede_to_agents=True, timeout=100):
@@ -271,7 +271,7 @@ class Agent:
             current = to_visit.popleft()
 
             if current[TIME_STEP] - initial_time_step > timeout:
-                print("Agent::find_path_3D_search: Search has timed out.".format(self.__agent_id))
+                #print("Agent::find_path_3D_search: Search has timed out.".format(self.__agent_id))
                 break
 
             if current[POS] == goal:  # Found goal!
@@ -331,7 +331,7 @@ class Agent:
             path.reverse()
             return path
 
-        print("Agent::find_path_3D_search: Agent {} could not reach its goal.".format(self.__agent_id))
+        #print("Agent::find_path_3D_search: Agent {} could not reach its goal.".format(self.__agent_id))
         return None
 
 
@@ -448,7 +448,7 @@ class Agent:
 
     def receive_locution(self, sender_id, received_locution: Locution):
         log = ""
-        print("Received locution {}".format(received_locution))
+        ##print("Received locution {}".format(received_locution))
         if received_locution.act_type() == ActType.ASK:
             # It is a question. Requires reply.
             if received_locution.content_type() == ContentType.WAYPOINTS:
@@ -503,11 +503,11 @@ class Agent:
                     self.__agents_estimated_plans[sender_id] = self.estimated_path(their_position, their_next_waypoints)
 
                     self.__agents_estimated_plan_lengths[sender_id] = len(self.__agents_estimated_plans[sender_id])
-                    print("Estimated path of agent {}: {}".format(sender_id, self.__agents_estimated_plans[sender_id]))
+                    ##print("Estimated path of agent {}: {}".format(sender_id, self.__agents_estimated_plans[sender_id]))
                     conflict = find_conflicts_between_paths(self.__plan, self.__agents_estimated_plans[sender_id], self.__current_time_step, 4)
                     illegal_swap_time_step = illegal_position_swap(self.__plan, self.__agents_estimated_plans[sender_id], 4)
-                    print("Conflict? {}".format(conflict))
-                    print("Swap? {}".format(illegal_swap_time_step))
+                    ##print("Conflict? {}".format(conflict))
+                    ##print("Swap? {}".format(illegal_swap_time_step))
 
                     # If a conflict happens after an illegal swap, consider the swap as the conflict
                     if illegal_swap_time_step is not None:
@@ -564,7 +564,7 @@ class Agent:
                 argument_possibilities = AF.arguments_that_attack(their_argument_id)
                 rebuttals = {}
                 for argument_id in argument_possibilities:
-                    print("Argument_id: {}".format(argument_id))
+                    ##print("Argument_id: {}".format(argument_id))
                     sender = self.__simulator.agent(sender_id)
                     if AF.argument(argument_id).generate(self, sender):
                         if argument_id not in self.__arguments_used_this_round:
@@ -576,15 +576,15 @@ class Agent:
                 acceptable_arguments = []
                 for arg in gen:
                     acceptable_arguments.append(arg)
-                    print("Plausible argument from {}: {}".format(their_argument_id, arg))
+                    ##print("Plausible argument from {}: {}".format(their_argument_id, arg))
 
                 if len(acceptable_arguments) > 0:
                     # Rebuttal.
                     # TODO: Remove randomness. Should pick best argument.
                     index = np.random.randint(0, len(acceptable_arguments))
                     chosen_arg_id = acceptable_arguments[index].id()
-                    print("Acceptable arguments: {}".format(acceptable_arguments))
-                    print("Chosen argument: {}".format(chosen_arg_id))
+                    ##print("Acceptable arguments: {}".format(acceptable_arguments))
+                    ##print("Chosen argument: {}".format(chosen_arg_id))
                     self.__arguments_used_this_round.add(chosen_arg_id)
                     # chosen_arg_id = acceptable_arguments[chosen_arg].id()
                     locution = Locution(ActType.ARGUE, ContentType.ARGUMENT, argument_id=chosen_arg_id)
@@ -613,21 +613,21 @@ class Agent:
                 if cpu_agent_id == sender_id and self.agent_id() != HUMAN:
                     #  Should not care about cpu x cpu discussions
                     return
-                print("\n########## VICTORIOUS ARGUMENTS ###########\n")
+                ##print("\n########## VICTORIOUS ARGUMENTS ###########\n")
                 AF = self.__culture.argumentation_framework
                 victorious_arguments = list(self.__arguments_used_this_round)
-                winner = "<font color=\"red\">your</font>"
-                loser = "<font color=\"green\">their</font>"
+                winner = "your"
+                loser = "their"
                 if self.__agent_id != HUMAN:
-                    winner = "<font color=\"green\">their</font>"
-                    loser = "<font color=\"red\">your</font>"
-                for argument_id in victorious_arguments:
-                    print(self.__culture.argumentation_framework.argument(argument_id).descriptive_text().format(winner, loser))
-                print("\n########## LOSER ARGUMENTS ###########\n")
-                print(received_locution.content()['failed_arguments'])
+                    winner = "their"
+                    loser = "your"
+                #for argument_id in victorious_arguments:
+                #    #print(self.__culture.argumentation_framework.argument(argument_id).descriptive_text().format(winner, loser))
+                ##print("\n########## LOSER ARGUMENTS ###########\n")
+                ##print(received_locution.content()['failed_arguments'])
                 failed_arguments = received_locution.content()['failed_arguments']
-                for argument_id in failed_arguments:
-                    print(self.__culture.argumentation_framework.argument(argument_id).descriptive_text().format(winner, loser))
+                #for argument_id in failed_arguments:
+                #    #print(self.__culture.argumentation_framework.argument(argument_id).descriptive_text().format(winner, loser))
 
                 if len(failed_arguments) > 0:
                     conjunctions = ["Although", "Even though", "Although"]
@@ -642,11 +642,11 @@ class Agent:
                     if len(victorious_arguments) > 0:
                         hint = AF.argument(victorious_arguments[0]).descriptive_text().format(winner, loser) + "."
                         split_words = hint.split()
-                        if split_words[1] == "color=\"red\">your</font>":
-                            split_words[0] = "<font color=\"red\">Your</font>"
+                        if split_words[1] == "your":
+                            split_words[0] = "Your"
                             del split_words[1]
-                        elif split_words[1] == "color=\"green\">their</font>":
-                            split_words[0] = "<font color=\"green\">Their</font>"
+                        elif split_words[1] == "their":
+                            split_words[0] = "Their"
                             del split_words[1]
                         else:
                             split_words[0].capitalize()
@@ -658,8 +658,7 @@ class Agent:
 
     def reroute_avoiding(self):
         self.__plan = self.find_path_3D_search((self.__current_pos, self.__current_time_step), self.__goal)
-        print("Agent {} Rerouting: {}".format(self.__agent_id, self.__plan))
-
+        ##print("Agent {} Rerouting: {}".format(self.__agent_id, self.__plan))
 
     def clear_negotiation_status(self):
         self.__arguments_used_this_round = set()

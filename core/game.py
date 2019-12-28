@@ -2,7 +2,7 @@ import time
 from world import World
 from interactive_argument import InteractiveArgument
 from edict import Broadcaster
-from utils import *
+from game_utils import *
 
 class Game():
 	direction_char_dict = {
@@ -17,7 +17,7 @@ class Game():
 		self.player_id = player_id
 		self.simulator = World(width, height, filename, player_id)
 
-		print("Starting grid with dimensions {} {}".format(width, height))
+		#print("Starting grid with dimensions {} {}".format(width, height))
 
 		self.agent_selected = None
 
@@ -63,7 +63,7 @@ class Game():
 		Broadcaster().publish("/direction_chosen", self.current_direction)
 		Broadcaster().publish("/new_event", direction_char)
 		Broadcaster().publish("/advance_simulation")
-		print("Action performed!")
+		#print("Action performed!")
 		#print('Agents in range: ',self.simulator.get_agents_in_range())
 		if len(self.simulator.get_agents_in_range()) < 2:
 			self.hint_label = ''
@@ -77,7 +77,7 @@ class Game():
 		self.hint_label = prefix + text
 
 	def set_property_label(self, text):
-		print("Setting property label")
+		#print("Setting property label")
 		self.property_label = text
 
 	def start_timer(self):
@@ -100,7 +100,7 @@ class Game():
 	def show_game_over(self):
 		self.is_over = True
 		self.simulator.save_results()
-		print("Congratulations! You have reached the goal.")
+		#print("Congratulations! You have reached the goal.")
 
 	def rewind_simulation(self):
 		self.step_slider = 0
@@ -138,11 +138,12 @@ class Game():
 			self.reset_human_direction()  # TODO: Remove hideous workaround
 
 	def show_collision_dialogue(self):
-		print("You have collided with another officer and it was your fault. Lose 5 points.")
+		#print("You have collided with another officer and it was your fault. Lose 5 points.")
+		pass
 
 	def update_agents(self):
 		step = self.current_step()
-		print("Update agents for step {}".format(step))
+		#print("Update agents for step {}".format(step))
 		self.simulator.update_agents(step)
 		agents = self.simulator.agents()
 		# FIXME: Should pass agents instead of creating all those data structures.
