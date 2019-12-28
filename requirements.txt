@@ -1,1 +1,14 @@
+cython
+psutil
+numba
 numpy
+scipy
+sklearn
+sortedcontainers
+matplotlib
+seaborn
+imageio
+sentencepiece
+tensorflow==1.14.0
+tensorflow_hub
+tf_sentencepiece
