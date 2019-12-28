@@ -4,7 +4,7 @@ import tensorflow as tf
 options_built = False
 def build():
 	tf.app.flags.DEFINE_integer("max_timestep", 2**30, "Max training time steps.")
-	tf.app.flags.DEFINE_integer("timesteps_before_starting_training", 2**5, "Number of initialization steps.")
+	tf.app.flags.DEFINE_integer("timesteps_before_starting_training", 0, "Number of initialization steps.")
 # Environment
 	# tf.app.flags.DEFINE_string("env_type", "car_controller", "environment types: rogue, car_controller, sentipolc, or environments from https://gym.openai.com/envs")
 	# tf.app.flags.DEFINE_string("env_type", "MontezumaRevengeDeterministic-v4", "Environment types: rogue, car_controller, sentipolc, MultipleProteinAlignment, or environments from https://gym.openai.com/envs")
