@@ -14,8 +14,9 @@ class Game():
 	}
 
 	def __init__(self, width, height, filename=None, player_id=None):
+		self.broadcaster = Broadcaster()
 		self.player_id = player_id
-		self.simulator = World(width, height, filename, player_id)
+		self.simulator = World(self.broadcaster, width, height, filename, player_id)
 
 		#print("Starting grid with dimensions {} {}".format(width, height))
 
@@ -38,16 +39,16 @@ class Game():
 		# Edict subscriptions #
 		#######################
 
-		Broadcaster().subscribe("/property_label/raw", self.set_property_label)
-		Broadcaster().subscribe("/score_changed", self.set_current_score)
-		Broadcaster().subscribe("/first_move", self.start_timer)
-		Broadcaster().subscribe("/new_hint", self.set_hint_label)
+		self.broadcaster.subscribe("/property_label/raw", self.set_property_label)
+		self.broadcaster.subscribe("/score_changed", self.set_current_score)
+		self.broadcaster.subscribe("/first_move", self.start_timer)
+		self.broadcaster.subscribe("/new_hint", self.set_hint_label)
 
-		Broadcaster().subscribe("/cell_pressed", self.cell_pressed)
-		Broadcaster().subscribe("/human_collision", self.show_collision_dialogue)
-		Broadcaster().subscribe("/advance_simulation", self.advance_simulation)
-		Broadcaster().subscribe("/game_over", self.show_game_over)
-		# Broadcaster().subscribe("/model_updated", self.update_agents)
+		self.broadcaster.subscribe("/cell_pressed", self.cell_pressed)
+		self.broadcaster.subscribe("/human_collision", self.show_collision_dialogue)
+		self.broadcaster.subscribe("/advance_simulation", self.advance_simulation)
+		self.broadcaster.subscribe("/game_over", self.show_game_over)
+		# self.broadcaster.subscribe("/model_updated", self.update_agents)
 
 	def get_score(self):
 		return self.current_score - self.time_penalty
@@ -60,9 +61,9 @@ class Game():
 			return
 		self.current_direction = current_direction
 		direction_char = self.direction_char_dict[current_direction]
-		Broadcaster().publish("/direction_chosen", self.current_direction)
-		Broadcaster().publish("/new_event", direction_char)
-		Broadcaster().publish("/advance_simulation")
+		self.broadcaster.publish("/direction_chosen", self.current_direction)
+		self.broadcaster.publish("/new_event", direction_char)
+		self.broadcaster.publish("/advance_simulation")
 		#print("Action performed!")
 		#print('Agents in range: ',self.simulator.get_agents_in_range())
 		if len(self.simulator.get_agents_in_range()) < 2:
@@ -70,7 +71,7 @@ class Game():
 			self.property_label = ''
 
 	def get_cell_information(self, x, y):
-		Broadcaster().publish("/cell_pressed", (x,y))
+		self.broadcaster.publish("/cell_pressed", (x,y))
 
 	def set_hint_label(self, cpu_agent_id, text):
 		prefix = "Hint (Agent {}): ".format(cpu_agent_id)
@@ -91,8 +92,8 @@ class Game():
 		self.time += 1
 		if self.time % 10 == 0:
 			self.time_penalty += 1
-			Broadcaster().publish("/score_changed", self.current_score)
-			Broadcaster().publish("/time_penalty")
+			self.broadcaster.publish("/score_changed", self.current_score)
+			self.broadcaster.publish("/time_penalty")
 
 	def set_current_score(self, score):
 		self.current_score = score
@@ -109,7 +110,7 @@ class Game():
 		self.step_slider = self.step_slider_max
 
 	def reset_human_direction(self):
-		Broadcaster().publish("/direction_chosen", self.current_direction)
+		self.broadcaster.publish("/direction_chosen", self.current_direction)
 		self.update_agents()
 
 	def advance_simulation(self):
@@ -127,7 +128,7 @@ class Game():
 		if cell_value > 0:  # If cell pressed is agent.
 			self.agent_selected = cell_value
 			# Request properties to display in side panel.
-			Broadcaster().publish("/highlighted_agent", self.agent_selected)
+			self.broadcaster.publish("/highlighted_agent", self.agent_selected)
 		else:
 			self.agent_selected = None
 

@@ -4,7 +4,6 @@ import collections
 import copy
 
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE, LOCAL_OBSTACLE
-from edict import Broadcaster
 from game_utils import *
 from interactive_argument import InteractiveArgument
 from locution import *
@@ -14,7 +13,8 @@ from locution import *
 class Agent:
     EXPLAINABLE = True
 
-    def __init__(self, agent_id, grid_dimensions, simulator):
+    def __init__(self, broadcaster, agent_id, grid_dimensions, simulator):
+        self.broadcaster = broadcaster
         self.__goal = None
         self.__plan = []
         self.__optimal_plan = []
@@ -46,7 +46,7 @@ class Agent:
         self.__current_direction = None
         self.__human_reply = None
 
-        Broadcaster().subscribe("/time_penalty", self.count_time_penalty)
+        self.broadcaster.subscribe("/time_penalty", self.count_time_penalty)
 
     def __getitem__(self, item):
         return self.__dict__.get(item, None)
@@ -68,10 +68,10 @@ class Agent:
         if self.__human_controlled is True:
             if self.__current_pos is not None:
                 self.__plan = [(self.__current_pos, self.__current_time_step)]
-            Broadcaster().subscribe("/direction_chosen", self.set_direction)
-            Broadcaster().subscribe("/new_time_step", self.change_score)
-            Broadcaster().subscribe("/human_collision", self.score_collision)
-            Broadcaster().subscribe("/human_reply", self.set_human_reply)
+            self.broadcaster.subscribe("/direction_chosen", self.set_direction)
+            self.broadcaster.subscribe("/new_time_step", self.change_score)
+            self.broadcaster.subscribe("/human_collision", self.score_collision)
+            self.broadcaster.subscribe("/human_reply", self.set_human_reply)
 
     def set_human_reply(self, reply):
         self.__human_reply = reply
@@ -81,7 +81,7 @@ class Agent:
 
     def change_score(self, delta = -1):
         self.score += delta
-        Broadcaster().publish("/score_changed", self.score)
+        self.broadcaster.publish("/score_changed", self.score)
 
     def set_direction(self, direction):
         if self.__human_controlled is False:
@@ -102,7 +102,7 @@ class Agent:
         self.__current_direction = direction
         self.__previous_plans[self.__current_time_step] = copy.deepcopy(self.__plan)
         self.__previous_optimal_plans[self.__current_time_step] = copy.deepcopy(self.__optimal_plan)
-        Broadcaster().publish("/score_changed", self.score)
+        self.broadcaster.publish("/score_changed", self.score)
 
     def culture_properties(self):
         if self.__culture is None:
@@ -454,7 +454,7 @@ class Agent:
             if received_locution.content_type() == ContentType.WAYPOINTS:
                 # They are asking for our next waypoint.
                 log = "{0} asks {1} about their next waypoints.".format(sender_id, self.__agent_id)
-                Broadcaster().publish("/log/raw", log)
+                self.broadcaster.publish("/log/raw", log)
 
                 turns = self.next_waypoints()
                 next_turns = None
@@ -473,7 +473,7 @@ class Agent:
                 # They are informing their next waypoints.
                 their_next_waypoints = received_locution.content()['waypoints']
                 log = "{0} informs {1} that their next waypoints are {2}".format(sender_id, self.__agent_id, their_next_waypoints)
-                Broadcaster().publish("/log/raw", log)
+                self.broadcaster.publish("/log/raw", log)
 
                 # Check if the other agent is in collision route with any obstacle or agent.
                 self.__other_agents_waypoints[sender_id] = their_next_waypoints
@@ -532,7 +532,7 @@ class Agent:
                 # They are letting us know about an obstacle.
                 obstacles = received_locution.content()['obstacle']
                 log = "{0} informs {1} about obstacles at positions {2}".format(sender_id, self.__agent_id, obstacles)
-                Broadcaster().publish("/log/raw", log)
+                self.broadcaster.publish("/log/raw", log)
 
                 obstacles_dict = {}
                 for obstacle in obstacles:
@@ -544,7 +544,7 @@ class Agent:
                 spotted_agent_id, spotted_agent_pos = received_locution.content()
                 log = "{0} informs {1} about the presence of agent {2} at position {3}".format(sender_id, self.__agent_id,
                                                                                                spotted_agent_id, spotted_agent_pos)
-                Broadcaster().publish("/log/raw", log)
+                self.broadcaster.publish("/log/raw", log)
 
                 self.update_world_knowledge({spotted_agent_pos: spotted_agent_id}, self.__current_time_step, overwrite=True)
 
@@ -557,7 +557,7 @@ class Agent:
                 their_argument_id = their_locution_content['argument_id']
                 argument_text = AF.argument(their_argument_id).descriptive_text()
                 log = "{0} argues to {1}: {2} ({3})".format(sender_id, self.__agent_id, argument_text, received_locution.content())
-                Broadcaster().publish("/log/raw", log)
+                self.broadcaster.publish("/log/raw", log)
 
 
                 # Time to fight back.
@@ -593,7 +593,7 @@ class Agent:
                     # Concede defeat.
                     self.__conceding_to_agents.add(sender_id)
                     log = "{0} convinced {1}.".format(sender_id, self.__agent_id)
-                    Broadcaster().publish("/log/raw", log)
+                    self.broadcaster.publish("/log/raw", log)
                     # Check if it knows the winner's intentions.
                     if sender_id not in self.__agents_estimated_plans:
                         locution = Locution(ActType.ASK, ContentType.WAYPOINTS)
@@ -604,11 +604,11 @@ class Agent:
                     locution = Locution(ActType.CONCEDE, ContentType.MULTIPLE_ARGUMENTS, failed_arguments=list(unsuccessful_arguments))
                     self.__simulator.send_locution(self.__agent_id, sender_id, locution)
                     log = "{0} rerouted to {1}".format(self.__agent_id, self.__plan)
-                    Broadcaster().publish("/log/raw", log)
+                    self.broadcaster.publish("/log/raw", log)
 
         elif received_locution.act_type() == ActType.CONCEDE:
             cpu_agent_id = sender_id if sender_id != HUMAN else self.agent_id()
-            Broadcaster().publish("/highlighted_agent", cpu_agent_id)
+            self.broadcaster.publish("/highlighted_agent", cpu_agent_id)
             if received_locution.content_type() == ContentType.MULTIPLE_ARGUMENTS and Agent.EXPLAINABLE:
                 if cpu_agent_id == sender_id and self.agent_id() != HUMAN:
                     #  Should not care about cpu x cpu discussions
@@ -653,8 +653,8 @@ class Agent:
                         hint = ' '.join(split_words)
                     else:
                         hint = "There are no arguments that challenge " + winner + " right of way."
-                Broadcaster().publish("/new_hint", cpu_agent_id, hint)
-            Broadcaster().publish("/model_updated")
+                self.broadcaster.publish("/new_hint", cpu_agent_id, hint)
+            self.broadcaster.publish("/model_updated")
 
     def reroute_avoiding(self):
         self.__plan = self.find_path_3D_search((self.__current_pos, self.__current_time_step), self.__goal)

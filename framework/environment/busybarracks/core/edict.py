@@ -7,7 +7,7 @@ class Singleton(type):
         return cls._instances[cls]
 
 
-class Broadcaster(metaclass=Singleton):
+class Broadcaster():
 
     def __init__(self):
         self.__subscriptions = {}

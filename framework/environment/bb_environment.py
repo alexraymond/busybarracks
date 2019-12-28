@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from multiprocessing import Process, Queue
+import time
+
 from collections import deque
 from environment.environment import Environment
 import numpy as np
@@ -11,6 +14,9 @@ bb_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'busybarracks
 sys.path.append(os.path.join(bb_path,'core'))
 
 from game import Game
+
+import warnings
+warnings.filterwarnings('ignore')
 
 MODULE_URL = {
 	'USE_Transformer': {
@@ -107,6 +113,7 @@ class DocEmbedder():
 class BBEnvironment(Environment):
 	filename = os.path.join(bb_path,'grid','DX.grd')
 	max_step = 100
+	state_scaler = 1.
 	
 	def get_action_shape(self):
 		return [(1,len(self.actions_set))] # take 1 action of n possible types
@@ -125,21 +132,32 @@ class BBEnvironment(Environment):
 		self.__game_view_shape, self.__property_view_shape = self.get_state_shape()
 		self.__grid_shape = self.__game_view_shape[:-1]
 		self.__doc_embedder = DocEmbedder('USE_DAN')
+		self.__game_thread = None
+		self.__input_queue = Queue()
+		self.__output_queue = Queue()
 
 	def stop(self):
-		self.__game = None
+		if self.__game_thread is not None:
+			self.__input_queue.put(None)
+			self.__game_thread.join()
+			self.__game_thread.terminate()
+			self.__game_thread = None
 
 	def reset(self, data_id=None):
 		self.stop()
-		self.__game = Game(self.max_x, self.max_y, self.filename)
-		self.last_observation = self.get_observation_dict(self.__game)
-		self.last_score = self.last_observation['score']
+		self.__game_thread = Process(
+			target=self.game_worker, 
+			args=(self.__input_queue, self.__output_queue, self.max_x, self.max_y, self.filename)
+		)
+		self.__game_thread.start()
+		#time.sleep(0.1)
+		self.last_observation = self.__output_queue.get()
 		self.last_state = self.normalize(self.last_observation['state'])
 		self.last_reward = 0
 		self.last_action = None
 		self.step = 0
 		#print(self.id, self.step)
-		return self.last_state
+		return self.last_state	
 		
 	def normalize(self, state_dict):
 		goal_slice = np.zeros(self.__grid_shape)
@@ -159,35 +177,54 @@ class BBEnvironment(Environment):
 		return {'ASCII': list(map(lambda x:list(map(str,x)), self.last_observation['state']['grid']))}
 		
 	def process(self, action_vector):
-		try:
-			self.__game.do_agent_action(self.actions_set[action_vector[0]])
-			self.last_observation = self.get_observation_dict(self.__game)
+		self.__input_queue.put(self.actions_set[action_vector[0]])
+		if self.__game_thread.is_alive():
+			self.last_observation = self.__output_queue.get()
 			is_terminal = self.last_observation['is_over']
 			self.last_state = self.normalize(self.last_observation['state'])
-			self.last_reward = self.last_observation['score']-self.last_score if not is_terminal else 1
-			self.last_score = self.last_observation['score']
-		except:
+			self.last_reward = self.last_observation['reward'] if not is_terminal else 1
+			self.last_action = action_vector
+		else:
 			is_terminal = True
-		self.last_action = action_vector
 		# complete step
 		self.step += 1
-		#print(self.id, self.step)
+		#print(self.id, self.step, is_terminal)
 		# Check steps constraints, cannot exceed given limit
 		if self.step > self.max_step:
 			is_terminal = True
 		return self.last_state, self.last_reward, is_terminal, None
 
 	@staticmethod
-	def get_observation_dict(game):
-		step = game.current_step()
-		return {
-			'state': {
-				'grid': game.simulator.grid_at(step),
-				'goal': game.get_goal(),
-				'property': game.property_label,
-				'hint': game.hint_label,
-			},
-			'score': game.get_score(),
-			'step': step,
-			'is_over': game.is_over,
-		}
+	def game_worker(input_queue, output_queue, max_x, max_y, filename):
+		def get_observation_dict(game):
+			step = game.current_step()
+			return {
+				'state': {
+					'grid': game.simulator.grid_at(step),
+					'goal': game.get_goal(),
+					'property': game.property_label,
+					'hint': game.hint_label,
+				},
+				'score': game.get_score(),
+				'step': step,
+				'is_over': game.is_over,
+			}
+		game = Game(max_x, max_y, filename)
+		last_score = game.get_score()
+		observation_dict = get_observation_dict(game)
+		observation_dict['reward'] = observation_dict['score']-last_score
+		output_queue.put(observation_dict)
+		try:
+			while not game.is_over:
+				action = input_queue.get()
+				if action is None:   # If you send `None`, the thread will exit.
+					break
+				game.do_agent_action(action)
+				step = game.current_step()
+				observation_dict = get_observation_dict(game)
+				observation_dict['reward'] = observation_dict['score']-last_score
+				output_queue.put(observation_dict) # step will always be > 0
+				last_score = game.get_score()
+		except:
+			pass
+	

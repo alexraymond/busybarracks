@@ -6,7 +6,6 @@ from grid3d import Grid3D
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE
 from game_agent import Agent
 from game_utils import *
-from edict import Broadcaster
 from cultures.easy import EasyCulture
 from cultures.medium import MediumCulture
 from cultures.hard import HardCulture
@@ -20,8 +19,9 @@ COMMUNICATION = True
 #FIXME: Agents need to be able to re-inform their new paths after rerouting.
 
 class World:
-    def __init__(self, w, h, filename, player_id=None):
-        self.__world_model = Grid3D(w, h)
+    def __init__(self, broadcaster, w, h, filename, player_id=None):
+        self.broadcaster = broadcaster
+        self.__world_model = Grid3D(self.broadcaster, w, h)
         self.__agents = {}
         self.__obstacles = []
         self.__width = w
@@ -47,11 +47,11 @@ class World:
             if not os.path.isdir(self.result_path):
                 os.mkdir(self.result_path)
 
-        Broadcaster().subscribe("/log/raw", self.print_log)
-        Broadcaster().subscribe("/human_collision", self.increment_collision_counter)
-        Broadcaster().subscribe("/new_event", self.add_event)
-        Broadcaster().subscribe("/time_in_popup", self.add_time_in_popup)
-        Broadcaster().subscribe("/highlighted_agent", self.send_agent_stats)
+        self.broadcaster.subscribe("/log/raw", self.print_log)
+        self.broadcaster.subscribe("/human_collision", self.increment_collision_counter)
+        self.broadcaster.subscribe("/new_event", self.add_event)
+        self.broadcaster.subscribe("/time_in_popup", self.add_time_in_popup)
+        self.broadcaster.subscribe("/highlighted_agent", self.send_agent_stats)
 
     def send_agent_stats(self, agent_id):
         text = "You vs Agent {}".format(agent_id) + '\n'
@@ -62,7 +62,7 @@ class World:
             cpu_property_value = cpu_agent.__dict__.get(prop, None)
             line = str(prop) + ": " + str(human_property_value) + " vs " + str(cpu_property_value)
             text += line + "\n"
-        Broadcaster().publish("/property_label/raw", text)
+        self.broadcaster.publish("/property_label/raw", text)
 
     def add_time_in_popup(self, time):
         self.__time_reading_popups += time
@@ -189,7 +189,7 @@ class World:
             current_pos = self.__world_model.find_agent(agent.agent_id(), self.__current_time_step)
             agent.set_current_pos(current_pos)
             if self.__game_over == False and agent.is_human() and current_pos == agent.goal():
-                Broadcaster().publish("/game_over")
+                self.broadcaster.publish("/game_over")
                 self.__game_over = True
             vr = agent.visibility_radius()
             visible_cells = {}
@@ -222,7 +222,7 @@ class World:
         if match is False:
             success = self.__world_model.add_agent(id, coord)
             if success:
-                self.__agents[id] = Agent(id, (self.__width, self.__height), self)
+                self.__agents[id] = Agent(self.broadcaster, id, (self.__width, self.__height), self)
                 self.__agents[id].set_culture(self.__culture)
                 self.__culture.initialise_random_values(self.__agents[id])
 
@@ -235,7 +235,7 @@ class World:
             return
         success = self.__world_model.add_agent(agent_id, coord)
         if success:
-            self.__agents[agent_id] = Agent(agent_id, (self.__width, self.__height), self)
+            self.__agents[agent_id] = Agent(self.broadcaster, agent_id, (self.__width, self.__height), self)
             # self.__culture.initialise_random_values(self.__agents[agent_id])
             if agent_id == HUMAN:  # By convention, agent 1 is always going to be the human player.
                 self.__agents[agent_id].set_human_control(True)
@@ -283,7 +283,7 @@ class World:
 
     def simulate_step(self):
         t = self.__current_time_step
-        Broadcaster().publish("/log/raw", "\n*** END OF STEP {} ***\n".format(t))
+        self.broadcaster.publish("/log/raw", "\n*** END OF STEP {} ***\n".format(t))
         self.__world_model.lock_for_edits()
         moves = {}
         still_agents = 0
@@ -299,15 +299,15 @@ class World:
             #print("Agents have reached a standstill.")
         # Propose move to model.
         moves_str = "Proposed moves: {}".format(moves)
-        # Broadcaster().publish("/log/raw", moves_str)
+        # self.broadcaster.publish("/log/raw", moves_str)
         #print(moves_str)
         result = self.__world_model.attempt_move(moves)
         if result:
             self.__current_time_step += 1
             # self.update_agents(self.__current_time_step)
-            Broadcaster().publish("/new_time_step")
+            self.broadcaster.publish("/new_time_step")
             if self.__current_time_step == 1:
-                Broadcaster().publish("/first_move")
+                self.broadcaster.publish("/first_move")
                 self.__start_time = time.time()
         return result
 

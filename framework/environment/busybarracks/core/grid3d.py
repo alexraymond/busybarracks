@@ -3,20 +3,20 @@ import copy
 
 import grid2d
 from grid2d import Grid2D, GLOBAL_OBSTACLE
-from edict import Broadcaster
 from game_utils import *
 
 
 class Grid3D:
-    __steps = ...  # type: List[Grid2D]
+    #__steps = ...  # type: List[Grid2D]
 
-    def __init__(self, w, h):
+    def __init__(self, broadcaster, w, h):
         """
         Constructs 3D grid (2D + time) containing one time step (initially).
         Further time steps can be appended to __steps.
         :param w: width of 2D grid
         :param h: height of 2D grid
         """
+        self.broadcaster = broadcaster
         self.__steps = []
         self.__steps.append(grid2d.Grid2D(w, h))
 
@@ -211,8 +211,8 @@ class Grid3D:
         if len(conflicts) > 0:
             #print("Grid3D::attempt_move: Conflicts found between agents {0}.".format(conflicts))
             if 1 in conflicts:
-                Broadcaster().publish("/human_collision")
-                Broadcaster().publish("/new_event", "COLLISION")
+                self.broadcaster.publish("/human_collision")
+                self.broadcaster.publish("/new_event", "COLLISION")
                 return False
 
         ######################################################################
