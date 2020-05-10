@@ -6,7 +6,6 @@ import copy
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE, LOCAL_OBSTACLE
 from edict import Broadcaster
 from game_utils import *
-from interactive_argument import InteractiveArgument
 from locution import *
 
 
