@@ -2,6 +2,9 @@ from itertools import count
 import numpy as np
 import collections
 import copy
+
+from systemd.journal import send
+
 from grid2d import Grid2D, EMPTY, GLOBAL_OBSTACLE, LOCAL_OBSTACLE
 from edict import Broadcaster
 from utils import *
@@ -16,6 +19,7 @@ class Agent:
     def __init__(self, agent_id, grid_dimensions, simulator):
         self.__goal = None
         self.__plan = []
+        self.__optimal_plan = []
         self.__known_cells = {}
         self.__agent_id = agent_id
         self.__visibility_radius = 2  # np.random.randint(4, 5)  # TODO: Change this.
@@ -24,6 +28,7 @@ class Agent:
         self.__latest_world_model = None
         self.__previous_world_models = {}
         self.__previous_plans = {}
+        self.__previous_optimal_plans = {}
         self.__grid_width, self.__grid_height = grid_dimensions
         self.__simulator = simulator
         self.__other_agents_waypoints = {}
@@ -37,13 +42,12 @@ class Agent:
 
         self.__culture = None
 
-        self.score = 100
+        self.score = 50
         self.time_penalty = 0
         self.__human_controlled = False
         self.__current_direction = None
         self.__human_reply = None
 
-        Broadcaster().subscribe("/request_agent_stats", self.send_properties)
         Broadcaster().subscribe("/time_penalty", self.count_time_penalty)
 
     def __getitem__(self, item):
@@ -75,7 +79,7 @@ class Agent:
         self.__human_reply = reply
 
     def score_collision(self):
-        self.change_score(-20)
+        self.change_score(-5)
 
     def change_score(self, delta = -1):
         self.score += delta
@@ -99,6 +103,7 @@ class Agent:
             self.__plan[1] = ((x, y), self.__current_time_step+1)
         self.__current_direction = direction
         self.__previous_plans[self.__current_time_step] = copy.deepcopy(self.__plan)
+        self.__previous_optimal_plans[self.__current_time_step] = copy.deepcopy(self.__optimal_plan)
         Broadcaster().publish("/score_changed", self.score)
 
     def culture_properties(self):
@@ -112,12 +117,6 @@ class Agent:
             value = self.__dict__.get(property, None)
             text += str(property) + ": " + str(value) + "\n"
         return text
-
-    def send_properties(self, agent_id):
-        if self.__agent_id != agent_id:
-            return
-        text = self.get_properties_as_text()
-        Broadcaster().publish("/property_label/raw", agent_id, text)
 
     def set_culture(self, culture):
         self.__culture = culture
@@ -203,11 +202,13 @@ class Agent:
             return
         if self.__current_pos != self.__goal:
             self.__plan = self.find_path_3D_search((self.__current_pos, self.__current_time_step), self.__goal)
+            self.__optimal_plan = self.find_path_3D_search((self.__current_pos, self.__current_time_step), self.__goal, concede_to_agents=False)
             if self.__human_controlled:
                 pass
                 # self.set_direction(self.__current_direction)
             if overwrite or (len(self.__previous_plans) <= 1 or time_step not in self.__previous_plans):
                 self.__previous_plans[time_step] = copy.deepcopy(self.__plan)
+                self.__previous_optimal_plans[time_step] = copy.deepcopy(self.__optimal_plan)
         # print("Path from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.__plan))
         # print("Turns from {0} to {1}: {2}".format(self.__current_pos, self.__goal, self.next_waypoints()))
 
@@ -579,27 +580,11 @@ class Agent:
                     acceptable_arguments.append(arg)
                     print("Plausible argument from {}: {}".format(their_argument_id, arg))
 
-                if self.is_human() and Agent.EXPLAINABLE:
-                    interactive_argument = InteractiveArgument()
-                    interactive_argument.proposed_argument = argument_text
-                    interactive_argument.sender_id = sender_id
-                    for argument in acceptable_arguments:
-                        interactive_argument.possible_answers[argument.id()] = argument.descriptive_text()
-                    if len(acceptable_arguments) == 0:
-                        interactive_argument.possible_answers[-1] = "I have no arguments to challenge you. I shall give way, then."
-                        interactive_argument.possible_answers[-2] = "I understand the risks, but I'll act as I please."
-                    else:
-                        interactive_argument.possible_answers[-1] = "Ok. I will give way to you then."
-                    Broadcaster().publish("/new_argument", interactive_argument)
-
                 if len(acceptable_arguments) > 0:
                     # Rebuttal.
                     # TODO: Remove randomness. Should pick best argument.
-                    if self.is_human() and Agent.EXPLAINABLE:
-                        chosen_arg_id = self.__human_reply
-                    else:
-                        index = np.random.randint(0, len(acceptable_arguments))
-                        chosen_arg_id = acceptable_arguments[index].id()
+                    index = np.random.randint(0, len(acceptable_arguments))
+                    chosen_arg_id = acceptable_arguments[index].id()
                     print("Acceptable arguments: {}".format(acceptable_arguments))
                     print("Chosen argument: {}".format(chosen_arg_id))
                     self.__arguments_used_this_round.add(chosen_arg_id)
@@ -611,20 +596,69 @@ class Agent:
                     self.__conceding_to_agents.add(sender_id)
                     log = "{0} convinced {1}.".format(sender_id, self.__agent_id)
                     Broadcaster().publish("/log/raw", log)
-                    if self.is_AI() and Agent.EXPLAINABLE and sender_id == HUMAN:
-                        interactive_argument = InteractiveArgument()
-                        interactive_argument.proposed_argument = "Ok, you have a point. I will move out of your way."
-                        interactive_argument.sender_id = self.__agent_id
-                        interactive_argument.possible_answers[0] = "Thank you."
-                        Broadcaster().publish("/new_argument", interactive_argument)
                     # Check if it knows the winner's intentions.
                     if sender_id not in self.__agents_estimated_plans:
                         locution = Locution(ActType.ASK, ContentType.WAYPOINTS)
                         self.__simulator.send_locution(self.__agent_id, sender_id, locution)
                     self.reroute_avoiding()
                     self.__negotiated_with = self.__conceding_to_agents
+                    unsuccessful_arguments = self.__arguments_used_this_round
+                    locution = Locution(ActType.CONCEDE, ContentType.MULTIPLE_ARGUMENTS, failed_arguments=list(unsuccessful_arguments))
+                    self.__simulator.send_locution(self.__agent_id, sender_id, locution)
                     log = "{0} rerouted to {1}".format(self.__agent_id, self.__plan)
                     Broadcaster().publish("/log/raw", log)
+
+        elif received_locution.act_type() == ActType.CONCEDE:
+            cpu_agent_id = sender_id if sender_id != HUMAN else self.agent_id()
+            Broadcaster().publish("/highlighted_agent", cpu_agent_id)
+            if received_locution.content_type() == ContentType.MULTIPLE_ARGUMENTS and Agent.EXPLAINABLE:
+                if cpu_agent_id == sender_id and self.agent_id() != HUMAN:
+                    #  Should not care about cpu x cpu discussions
+                    return
+                print("\n########## VICTORIOUS ARGUMENTS ###########\n")
+                AF = self.__culture.argumentation_framework
+                victorious_arguments = list(self.__arguments_used_this_round)
+                winner = "<font color=\"red\">your</font>"
+                loser = "<font color=\"green\">their</font>"
+                if self.__agent_id != HUMAN:
+                    winner = "<font color=\"green\">their</font>"
+                    loser = "<font color=\"red\">your</font>"
+                for argument_id in victorious_arguments:
+                    print(self.__culture.argumentation_framework.argument(argument_id).descriptive_text().format(winner, loser))
+                print("\n########## LOSER ARGUMENTS ###########\n")
+                print(received_locution.content()['failed_arguments'])
+                failed_arguments = received_locution.content()['failed_arguments']
+                for argument_id in failed_arguments:
+                    print(self.__culture.argumentation_framework.argument(argument_id).descriptive_text().format(winner, loser))
+
+                if len(failed_arguments) > 0:
+                    conjunctions = ["Although", "Even though", "Although"]
+                    failed_arguments = sorted(failed_arguments)
+                    failed_argument_text = AF.argument(failed_arguments[-1]).descriptive_text().format(loser, winner)
+                    hint = conjunctions[np.random.randint(len(conjunctions))] + " " + failed_argument_text + ", "
+                    rebuttals_to_failed_argument = AF.arguments_that_attack(failed_arguments[-1])
+                    used_arguments = [argument for argument in victorious_arguments if argument in rebuttals_to_failed_argument]
+                    used_argument_text = AF.argument(used_arguments[0]).descriptive_text().format(winner, loser)
+                    hint += used_argument_text + "."
+                else:
+                    if len(victorious_arguments) > 0:
+                        hint = AF.argument(victorious_arguments[0]).descriptive_text().format(winner, loser) + "."
+                        split_words = hint.split()
+                        if split_words[1] == "color=\"red\">your</font>":
+                            split_words[0] = "<font color=\"red\">Your</font>"
+                            del split_words[1]
+                        elif split_words[1] == "color=\"green\">their</font>":
+                            split_words[0] = "<font color=\"green\">Their</font>"
+                            del split_words[1]
+                        else:
+                            split_words[0].capitalize()
+                        hint = ' '.join(split_words)
+                    else:
+                        hint = "There are no arguments that challenge " + winner + " right of way."
+
+
+                Broadcaster().publish("/new_hint", cpu_agent_id, hint)
+
 
 
 
@@ -654,6 +688,9 @@ class Agent:
 
     def plan_at(self, t):
         return self.__previous_plans.get(t, None)
+
+    def optimal_plan_at(self, t):
+        return self.__previous_optimal_plans.get(t, None)
 
     def goal(self):
         return self.__goal

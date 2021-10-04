@@ -34,20 +34,20 @@ N
 PROPERTIES
 1 Tasked Status VALUE Tasked
 1 Military Rank VALUE 3
-2 Tasked Status VALUE At Ease
-2 Military Rank VALUE 1
+2 Tasked Status VALUE Tasked
+2 Military Rank VALUE 2
+4 Tasked Status VALUE At Ease
+4 Military Rank VALUE 5
 3 Tasked Status VALUE Tasked
-3 Military Rank VALUE 5
-4 Tasked Status VALUE Tasked
-4 Military Rank VALUE 2
+3 Military Rank VALUE 6
 6 Tasked Status VALUE Tasked
 6 Military Rank VALUE 4
-7 Tasked Status VALUE Tasked
+7 Tasked Status VALUE At Ease
 7 Military Rank VALUE 5
-8 Tasked Status VALUE At Ease
+8 Tasked Status VALUE Tasked
 8 Military Rank VALUE 5
 9 Tasked Status VALUE Tasked
-9 Military Rank VALUE 4
+9 Military Rank VALUE 2
 10 Tasked Status VALUE Tasked
-10 Military Rank VALUE 2
+10 Military Rank VALUE 4
 END

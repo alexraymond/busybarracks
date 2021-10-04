@@ -9,11 +9,13 @@ class ActType(Enum):
 
 
 class ContentType(Enum):
+    NONE = 0
     OBSTACLE = 1
     WAYPOINTS = 2
     OWN_LOCATION = 3
     ANOTHER_AGENT = 4
     ARGUMENT = 5
+    MULTIPLE_ARGUMENTS = 6
 
 class Locution:
     def __init__(self, act_type, content_type, **kwargs):

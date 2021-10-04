@@ -1,4 +1,4 @@
-
+from itertools import chain, combinations
 
 class Argument:
     def __init__(self, arg_id, descriptive_text):
@@ -70,6 +70,7 @@ class ArgumentationFramework:
 
     def argument(self, argument_id):
         return self.__arguments[argument_id]
+
 
 
 

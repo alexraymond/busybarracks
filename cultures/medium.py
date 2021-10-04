@@ -26,7 +26,7 @@ class MediumCulture(Culture):
         motion.set_generator(lambda gen: True)  # Propositional arguments are always valid.
         args.append(motion)
 
-        arg1 = Argument(1, "My military rank is higher than yours.")
+        arg1 = Argument(1, "{0} Military Rank is higher than {1}s")
 
         def arg1_generator(my: Agent, their: Agent):
             return my["Military Rank"] > their["Military Rank"]
@@ -34,7 +34,7 @@ class MediumCulture(Culture):
         arg1.set_generator(arg1_generator)
         args.append(arg1)
 
-        arg2 = Argument(2, "I am currently performing a task and you are not.")
+        arg2 = Argument(2, "{0} status is Tasked and {1} status is At Ease")
 
         def arg2_generator(my: Agent, their: Agent):
             return my["Tasked Status"] == "Tasked" and their["Tasked Status"] == "At Ease"
@@ -42,15 +42,15 @@ class MediumCulture(Culture):
         arg2.set_generator(arg2_generator)
         args.append(arg2)
 
-        arg3 = Argument(3, "My task is more important than yours.")
-
+        arg3 = Argument(3, "{0} task is more important than {1}s")
         def arg3_generator(my: Agent, their: Agent):
-            return my["Task Importance"] > their["Military Rank"] and my["Task Importance"] > their["Task Importance"]
+            return my["Task Importance"] > their["Military Rank"] and \
+                   my["Task Importance"] > their["Task Importance"]
 
         arg3.set_generator(arg3_generator)
         args.append(arg3)
 
-        arg4 = Argument(4, "I am a Special Ops officer, so my rank is 3 levels\n higher than it shows.")
+        arg4 = Argument(4, "{0} rank is 3 levels higher because of Special Ops status")
         def arg4_generator(my: Agent, their: Agent):
             my_military_rank = my["Military Rank"] if my["Tasked Status"] == "At Ease" else my["Task Importance"]
             their_military_rank = their["Military Rank"] if their["Tasked Status"] == "At Ease" else their[

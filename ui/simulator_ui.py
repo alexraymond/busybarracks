@@ -10,11 +10,15 @@ from edict import Broadcaster
 from grid2d import LOCAL_OBSTACLE
 from utils import *
 from ui.ui_utils import *
+from PySide2.QtMultimedia import *
+from PySide2.QtMultimediaWidgets import *
+import cv2
+import threading
 
 
 class SimulatorUI(QMainWindow):
 
-    def __init__(self, width, height, filename=None, player_id=None, parent=None):
+    def __init__(self, width, height, filename=None, player_id=None, recording=False, parent=None):
         super(SimulatorUI, self).__init__(parent)
 
         # TODO: Clean this mess
@@ -146,6 +150,8 @@ class SimulatorUI(QMainWindow):
         # Connecting actions to slots #
         ###############################
 
+        self.resize(1024, 1024)
+
         self.add_global_obstacle_action.toggled.connect(self.add_global_obstacle_toggled)
         self.add_local_obstacle_action.toggled.connect(self.add_local_obstacle_toggled)
         self.add_agent_action.toggled.connect(self.add_agent_toggled)
@@ -165,122 +171,58 @@ class SimulatorUI(QMainWindow):
         # self.arg_widget = QDialog()
         # self.arg_widget.hide()
 
+        ######################
+        # Set up webcam feed #
+        ######################
+        self.recording_enabled = recording
+        if self.recording_enabled:
+            self.video_capture = cv2.VideoCapture(-1)
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')
+            frame_width = int(self.video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+            frame_height = int(self.video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            self.video_output = cv2.VideoWriter('results/{}/recording.avi'.format(player_id), fourcc, 20.0, (640,
+                                                                                                             480))
+            self.video_thread = threading.Thread(target=self.record_video)
+            self.video_thread.start()
 
         #######################
         # Edict subscriptions #
         #######################
 
         Broadcaster().subscribe("/cell_pressed", self.cell_pressed)
-        Broadcaster().subscribe("/new_argument", self.show_argument)
         Broadcaster().subscribe("/human_collision", self.show_collision_dialogue)
         Broadcaster().subscribe("/advance_simulation", self.advance_simulation)
         Broadcaster().subscribe("/game_over", self.show_game_over)
         # Broadcaster().subscribe("/model_updated", self.update_agents)
 
+    def record_video(self):
+        while self.video_output.isOpened():
+            ret, frame = self.video_capture.read()
+            if ret == True:
+                self.video_output.write(frame)
+            else:
+                break
+
     def show_game_over(self):
         msg_box = QMessageBox()
         msg_box.setWindowTitle("Success!")
-        msg_box.setFont(MEDIUM_FONT)
+        msg_box.setFont(LARGE_FONT)
         msg_box.setText("Congratulations! You have reached the goal.")
         msg_box.exec_()
+        if self.recording_enabled:
+            self.video_output.release()
+            self.video_thread.join(1.0)
+            self.video_capture.release()
+
         self.simulator.save_results()
         self.deleteLater()
 
     def show_collision_dialogue(self):
         msg_box = QMessageBox()
         msg_box.setWindowTitle("Collision!")
-        msg_box.setFont(MEDIUM_FONT)
-        msg_box.setText("You have collided with another officer and it was <b>your fault</b>.\nLose 20 " + u"\U000026FD" + ".")
+        msg_box.setFont(LARGE_FONT)
+        msg_box.setText("You have collided with another officer and it was <b>your fault</b>.<br>Lose 5 " + u"\U000026FD" + ".")
         msg_box.exec_()
-
-    def show_argument2(self, interactive_argument: InteractiveArgument):
-        print("Showing message box!")
-        print(interactive_argument)
-        msg_box = QMessageBox()
-        msg_box.setWindowTitle("Agent {} says to you:".format(interactive_argument.sender_id))
-        msg_box.setText(interactive_argument.proposed_argument)
-        buttons = {}
-        for key, argument in interactive_argument.possible_answers.items():
-            button = msg_box.addButton(argument, QMessageBox.AcceptRole)
-            buttons[button] = key
-
-        msg_box.exec_()
-
-    def show_argument(self, interactive_argument: InteractiveArgument):
-        arg_widget = QDialog()
-        other_agent_id = interactive_argument.sender_id
-        Broadcaster().publish("/request_agent_stats", HUMAN)
-        Broadcaster().publish("/request_agent_stats", other_agent_id)
-        arg_widget.setWindowTitle("Agent {} says to you:".format(other_agent_id))
-        main_arg_label = QLabel(arg_widget)
-        main_arg_label.setText("Agent {}: <i>\"".format(other_agent_id) + interactive_argument.proposed_argument + "\"</i>")
-        main_arg_label.setFont(LARGE_FONT)
-        buttons = {}
-        button_group = QButtonGroup(arg_widget)
-        def button_pressed(button):
-            arg_id = buttons[button]
-            arg_widget.done(arg_id)
-            Broadcaster().publish("/new_event", "ARG{}".format(arg_id))
-
-
-        for key, argument in interactive_argument.possible_answers.items():
-            button = QPushButton(argument, arg_widget)
-            button.setFont(LARGE_FONT)
-            button_group.addButton(button)
-            buttons[button] = key  # Inverse dict to find key when pressing button.
-            button_group.buttonClicked.connect(button_pressed)
-
-        frame = QFrame(arg_widget)
-
-        # h_layout = QHBoxLayout(arg_widget)
-        # human_agent_stats_label = QLabel(arg_widget)
-        # text = "You:\n"
-        # text += self.simulator.agent(HUMAN).get_properties_as_text()
-        # human_agent_stats_label.setText(text)
-        # font = QFont("Helvetica", 14)
-        # font.setBold(True)
-        # human_agent_stats_label.setFont(font)
-        #
-        # separator_label = QLabel(arg_widget)
-        # separator_label.setFrameStyle(QFrame.VLine | QFrame.Plain)
-        #
-        # frame.setFrameStyle(QFrame.Panel | QFrame.Plain)
-        #
-        # computer_agent_stats_label = QLabel(arg_widget)
-        # text = "Agent {}:\n".format(other_agent_id)
-        # text += self.simulator.agent(other_agent_id).get_properties_as_text()
-        # computer_agent_stats_label.setText(text)
-        # computer_agent_stats_label.setFont(QFont("Helvetica", 14))
-        #
-        # h_layout.addWidget(human_agent_stats_label)
-        # h_layout.addWidget(separator_label)
-        # h_layout.addWidget(computer_agent_stats_label)
-        # frame.setLayout(h_layout)
-
-        v_layout = QVBoxLayout(arg_widget)
-        v_layout.addWidget(main_arg_label)
-        v_layout.addWidget(frame)
-        spacer = QSpacerItem(0, 25)
-        # v_layout.addWidget(spacer)
-        buttons_label = QLabel(arg_widget)
-        buttons_label.setText("Possible valid responses:")
-        buttons_label.setAlignment(Qt.AlignCenter)
-        buttons_label.setFont(QFont("Helvetica", 14))
-        v_layout.addWidget(buttons_label)
-        for button in buttons.keys():
-            v_layout.addWidget(button)
-
-        # self.setWindowModality(QWidget.Modal)
-        arg_widget.setLayout(v_layout)
-        arg_widget.setMinimumSize(300, 200)
-        arg_widget.setWindowFlags(Qt.Window | Qt.WindowTitleHint | Qt.CustomizeWindowHint)
-        open_time = time.time()
-        chosen_argument = arg_widget.exec_()
-        close_time = time.time()
-        Broadcaster().publish("/human_reply", chosen_argument)
-        Broadcaster().publish("/time_in_popup", close_time - open_time)
-
-
 
     def rewind_simulation(self):
         self.step_slider.setValue(0)
@@ -416,6 +358,7 @@ class SimulatorUI(QMainWindow):
         # FIXME: Should pass agents instead of creating all those data structures.
         world_models = {}
         plans = {}
+        optimal_plans = {}
         visibilities = {}
         positions = {}
         goals = {}
@@ -423,11 +366,13 @@ class SimulatorUI(QMainWindow):
             positions[agent.agent_id()] = agent.current_pos()
             world_models[agent.agent_id()] = agent.world_model_at(step)
             plans[agent.agent_id()] = agent.plan_at(step)
+            optimal_plans[agent.agent_id()] = agent.optimal_plan_at(step)
             visibilities[agent.agent_id()] = agent.visibility_radius()
             goals[agent.agent_id()] = agent.goal()
         self.grid_view.update_agent_positions(positions)
         self.grid_view.update_agent_models(world_models)
         self.grid_view.update_agent_plans(plans)
+        self.grid_view.update_agent_optimal_plans(optimal_plans)
         self.grid_view.update_agent_visibilities(visibilities)
         self.grid_view.update_agent_goals(goals)
 

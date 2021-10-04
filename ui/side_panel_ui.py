@@ -52,6 +52,9 @@ class ButtonClusterUI(QWidget):
 
         self.setLayout(self.grid_layout)
 
+        self.setFixedWidth(200)
+        self.setFixedHeight(200)
+
         self.button_group.buttonClicked.connect(self.set_button_pressed)
 
         self.current_direction = None
@@ -108,13 +111,14 @@ class SidePanelUI(QWidget):
         # self.logger_text_edit.setReadOnly(True)
         # v_layout.addWidget(self.logger_text_edit)
 
-        self.human_property_label = QLabel(self)
-        self.human_property_label.setFont(LARGE_FONT)
-        v_layout.addWidget(self.human_property_label)
-
         self.property_label = QLabel(self)
         self.property_label.setFont(LARGE_FONT)
         v_layout.addWidget(self.property_label)
+
+        self.hint_label = QLabel(self)
+        self.hint_label.setWordWrap(True)
+        self.hint_label.setFont(LARGE_FONT)
+        v_layout.addWidget(self.hint_label)
 
         self.button_cluster = ButtonClusterUI(self)
         v_layout.addWidget(self.button_cluster)
@@ -131,6 +135,12 @@ class SidePanelUI(QWidget):
         Broadcaster().subscribe("/property_label/raw", self.set_property_label)
         Broadcaster().subscribe("/score_changed", self.set_score)
         Broadcaster().subscribe("/first_move", self.start_timer)
+        Broadcaster().subscribe("/new_hint", self.set_hint_label)
+
+    def set_hint_label(self, cpu_agent_id, text):
+        prefix = "Hint (Agent {}): ".format(cpu_agent_id)
+        self.hint_label.setText(prefix + text)
+        self.hint_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
 
     def start_timer(self):
         self.timer.start(1000)
@@ -139,7 +149,7 @@ class SidePanelUI(QWidget):
         self.time = self.time.addSecs(1)
         self.timer_label.setText("Time: " + self.time.toString("mm:ss"))
         self.score_label.setStyleSheet("QLabel {color : black}")
-        if self.time.second() % 5 == 0:
+        if self.time.second() % 10 == 0:
             self.time_penalty += 1
             Broadcaster().publish("/score_changed", self.current_score)
             Broadcaster().publish("/time_penalty")
@@ -150,15 +160,11 @@ class SidePanelUI(QWidget):
         # self.logger_text_edit.append(text)
         pass
 
-    def set_property_label(self, agent_id, text):
+    def set_property_label(self, text):
         print("Setting property label")
-        if agent_id == HUMAN:
-            self.human_property_label.setText("You:\n" + text)
-            self.human_property_label.setFont(LARGE_FONT)
-            self.human_property_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
-        else:
-            self.property_label.setText("Agent {}:\n".format(agent_id) + text)
-            self.property_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
+        self.property_label.setText(text)
+        self.property_label.setFont(LARGE_FONT)
+        self.property_label.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
 
     def set_score(self, score):
         self.current_score = score

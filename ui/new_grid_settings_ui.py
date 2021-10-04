@@ -34,6 +34,8 @@ class NewGridSettings(QDialog):
         self.file_load.setText("...")
         self.file_load.clicked.connect(self.open_file_dialog)
 
+        self.recording_checkbox = QCheckBox("Video recording", self)
+
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.clicked.connect(self.on_cancel_clicked)
         self.finish_button = QPushButton("Accept")
@@ -53,8 +55,9 @@ class NewGridSettings(QDialog):
         layout.addWidget(self.load_grid_radio_button, 4, 0)
         layout.addWidget(self.file_line_edit, 5, 0)
         layout.addWidget(self.file_load, 5, 1)
-        layout.addWidget(self.cancel_button, 6, 0)
-        layout.addWidget(self.finish_button, 6, 1)
+        layout.addWidget(self.recording_checkbox, 6, 0)
+        layout.addWidget(self.cancel_button, 7, 0)
+        layout.addWidget(self.finish_button, 7, 1)
 
         self.setLayout(layout)
         self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
@@ -69,7 +72,7 @@ class NewGridSettings(QDialog):
         if self.button_group.checkedButton() == self.new_grid_radio_button:
             self.new_grid_requested.emit(self.width_spin_box.value(), self.height_spin_box.value())
         elif self.button_group.checkedButton() == self.load_grid_radio_button:
-            self.load_grid_requested.emit(self.file_line_edit.text(), self.id_line_edit.text())
+            self.load_grid_requested.emit(self.file_line_edit.text(), self.id_line_edit.text(), self.recording_checkbox.isChecked())
         self.close()
 
     @Slot()
@@ -94,7 +97,7 @@ class NewGridSettings(QDialog):
         self.file_line_edit.setText(filename)
 
     new_grid_requested = Signal(int, int)
-    load_grid_requested = Signal(str, str)
+    load_grid_requested = Signal(str, str, bool)
     cancelled = Signal()
 
 

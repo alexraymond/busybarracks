@@ -30,8 +30,8 @@ class GridCellUI(QGraphicsRectItem):
         self.hover_enter_callback = None
         self.hover_leave_callback = None
         self.mouse_press_callback = None
-        self.setAcceptHoverEvents(True)
-        self.setAcceptDrops(True)
+        self.setAcceptHoverEvents(False)
+        self.setAcceptDrops(False)
 
     def set_value(self, value, special_cell=None):
         self.cell_value = value
@@ -199,6 +199,7 @@ class GridUI(QGraphicsView):
         self.grid_rect = QRectF(0, 0, x_cells * CELL_SIZE, y_cells * CELL_SIZE)
         self.agent_world_models = {}
         self.agent_plans = {}
+        self.agent_optimal_plans = {}
         self.agent_visibilities = {}
         self.agent_positions = {}
         self.agent_goals = {}
@@ -208,7 +209,7 @@ class GridUI(QGraphicsView):
         self.keep_paths_on = False
         self.current_selection = None
         self.human_goal = None
-        self.path_length = 2
+        self.path_length = 100
         for i in range(x_cells):
             self.cells[i] = {}
             for j in range(y_cells):
@@ -224,6 +225,11 @@ class GridUI(QGraphicsView):
         self.fitInView(self.grid_rect, Qt.KeepAspectRatio)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        Broadcaster().subscribe("/highlighted_agent", self.set_highlighted_agent)
+
+    def set_highlighted_agent(self, highlighted_agent):
+        self.highlighted_agent = highlighted_agent
+        self.set_paths_on(True)
 
     def save_snapshot(self, player_id, time_step):
         filename = "results/{}/{}.png".format(player_id, time_step)
@@ -258,6 +264,9 @@ class GridUI(QGraphicsView):
     def update_agent_plans(self, plans):
         self.agent_plans = plans
 
+    def update_agent_optimal_plans(self, optimal_plans):
+        self.agent_optimal_plans = optimal_plans
+
     def update_agent_visibilities(self, visibilities):
         self.agent_visibilities = visibilities
 
@@ -271,11 +280,15 @@ class GridUI(QGraphicsView):
         self.ui_visibilities[agent_id] = visibility
         self.grid_scene.addItem(visibility)
 
-    def draw_path(self, agent_id):
+    def draw_path(self, agent_id, optimal=True):
         plan = self.agent_plans.get(agent_id, None)
         if plan is None or len(plan) == 0:
             return
-        path = PathUI(agent_id, self.agent_plans[agent_id], self.path_length, self)
+        if optimal:
+            plan = self.agent_optimal_plans.get(agent_id, None)
+            path = PathUI(agent_id, self.agent_optimal_plans[agent_id], self.path_length, self)
+        else:
+            path = PathUI(agent_id, self.agent_plans[agent_id], self.path_length, self)
         self.ui_paths[agent_id] = path
         self.grid_scene.addItem(path)
         origin_x, origin_y = self.agent_plans[agent_id][0][POS]
@@ -290,7 +303,8 @@ class GridUI(QGraphicsView):
         self.ui_visibilities = {}
         if self.keep_paths_on:
             for agent_id, path in self.agent_plans.items():
-                self.draw_path(agent_id)
+                if self.highlighted_agent == agent_id:
+                    self.draw_path(agent_id)
 
     def set_paths_on(self, on):
         self.keep_paths_on = on
